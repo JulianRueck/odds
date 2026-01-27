@@ -1,9 +1,5 @@
+use cdd::{args, config, discovery, explain, history::{self, History}, model, paths, ranking, session, tui};
 use std::env;
-
-mod utils;
-mod session;
-
-use crate::session::SessionStack;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -14,20 +10,33 @@ fn main() {
         return;
     }
 
-    let mut session = SessionStack::new(10);
+    let mut session = session::SessionStack::new(10);
+
+    let mut history = History::load().unwrap_or_default();
 
     // Do a regular cd if it's an explicit path
-    if let Some(dir) = utils::detect_explicit_path(&args[1]) {
+    if let Some(dir) = paths::detect_explicit_path(&args[1]) {
         print!("{dir}");
 
-        // Store in short term session stask
-        session.push(dir);
+        // Store in short term session stack
+        session.push(&dir);
 
+        // Store in history
+        history.record_visit(&dir);
+        history.save().ok();
 
-        // TODO: add to history
         return;
     }
 
-    
-    println!("Hello, {}!", args[1]); // TODO: remove
+    // Model / history lookup
+    // if confident -> cd
+    // if ambigous -> TUI picker
+    // if no candidates -> bounded discovery below
+
+    // Bounded discovery
+    // cd + learn
+
+    let roots = paths::search_roots();
+    let results = discovery::discover(&roots, &args[1], 5, 10);
+    // TODO: pass results to TUI picker
 }

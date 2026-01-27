@@ -1,9 +1,12 @@
-use std::{fmt::format, fs::canonicalize, path::{Path, PathBuf}};
+use std::{path::{Path, PathBuf}};
+use crate::{paths};
 
+#[derive(Debug)]
 pub struct SessionEntry {
     pub path: PathBuf,
 }
 
+#[derive(Debug)]
 pub struct SessionStack {
     max_size: usize,
     entries: Vec<SessionEntry>
@@ -20,7 +23,7 @@ impl SessionStack {
 
     /// Push a directory onto the stack.
     pub fn push<P: AsRef<Path>>(&mut self, path: P) {
-        let path = normalize(path);
+        let path = paths::normalize(path);
 
         // If already current do nothing
         if self.entries.first().map(|e| &e.path) == Some(&path) {
@@ -64,10 +67,4 @@ impl SessionStack {
             })
             .collect()
     }
-}
-
-fn normalize<P: AsRef<Path>>(path: P) -> PathBuf {
-    let p = path.as_ref();
-
-    canonicalize(p).unwrap_or_else(|_| p.to_path_buf())
 }
