@@ -54,7 +54,7 @@ impl History {
         Ok(history)
     }
 
-    /// Persits state into history.
+    /// Persist state into history.
     pub fn save(&self) -> io::Result<()> {
         let path = history_file();
 
@@ -69,6 +69,6 @@ impl History {
 }
 
 fn history_file() -> PathBuf {
-    let home = std::env::var("HOME").unwrap_or_else((|_| ".".into()));
+    let home = std::env::var("HOME").unwrap_or_else(|_| ".".into());
     PathBuf::from(home).join(HISTORY_PATH)
 }

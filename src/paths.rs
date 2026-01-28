@@ -19,7 +19,9 @@ pub fn search_roots() -> Vec<PathBuf> {
         roots.push(pwd.clone());
 
         if let Some(git_root) = find_git_root(&pwd) {
-            roots.push(git_root);
+            if git_root != pwd {
+                roots.push(git_root);
+            }
         }
     }
 
@@ -29,6 +31,7 @@ pub fn search_roots() -> Vec<PathBuf> {
 
     roots.sort();
     roots.dedup();
+
     roots
 }
 
