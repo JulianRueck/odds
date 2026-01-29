@@ -4,23 +4,12 @@ use std::{
     path::PathBuf,
 };
 
-#[derive(Debug)]
-pub struct DiscoveryCandidate {
-    pub path: PathBuf,
-    pub match_kind: Matchkind,
-    pub score: f32,
-}
-
-#[derive(Debug)]
-pub enum Matchkind {
-    Exact,
-    Prefix,
-    Substring,
-    Fuzzy,
-}
+use super::DiscoveryCandidate;
+use super::Matchkind;
+use super::matcher::{fuzzy_match, strong_match};
 
 /// Does a BFS to discover novel paths i.e. not previously visited, scored by match kind and fuzzy.
-pub fn discover(
+pub fn bfs_discover(
     roots: &[PathBuf],
     token: &str,
     max_depth: usize,
@@ -44,7 +33,7 @@ pub fn discover(
         if depth > max_depth {
             continue;
         }
-
+        // TODO: Add caching; read_dir is expensive dangit
         let entries = match fs::read_dir(&dir) {
             Ok(e) => e,
             Err(_) => continue,
@@ -92,7 +81,7 @@ pub fn discover(
         }
     }
 
-    sort_candidates(& mut strong_results);
+    sort_candidates(&mut strong_results);
 
     if strong_results.len() >= max_results {
         strong_results.truncate(max_results);
@@ -108,54 +97,7 @@ pub fn discover(
     strong_results
 }
 
-/// Matches using equality, prefix or substring.
-fn strong_match(name: &str, token: &str) -> Option<(Matchkind, f32)> {
-    if name == token {
-        Some((Matchkind::Exact, 100.0))
-    } else if name.starts_with(&token) {
-        Some((Matchkind::Prefix, 70.0))
-    } else if name.contains(&token) {
-        Some((Matchkind::Substring, 50.0))
-    }  else {
-        None
-    }
-}
-
-fn fuzzy_match(name: &str, token: &str) -> Option<f32> {
-    let mut score = 0.0;
-    let mut last_match = None;
-    let mut chars = token.chars();
-    let mut current = chars.next()?;
-
-    for (i, c) in name.chars().enumerate() {
-        if c == current {
-            score += 10.0;
-
-            if let Some(prev) = last_match {
-                if i == prev + 1 {
-                    score += 15.0;
-                } else {
-                    score -= (i - prev - 1) as f32;
-                }
-            } else {
-                score -= i as f32 * 0.5;
-            }
-
-            last_match = Some(i);
-
-            if let Some(next) = chars.next() {
-                current = next;
-            } else {
-                // Ensure there's always some positive score using max().
-                return Some(score.max(1.0));
-            }
-        }
-    }
-
-    None
-}
-
-/// Sort by score descending and tie-break lexicographically
+/// Sort by score descending and tie-break lexicographically.
 fn sort_candidates(candidates: &mut [DiscoveryCandidate]) {
     candidates.sort_by(|a, b| {
         b.score

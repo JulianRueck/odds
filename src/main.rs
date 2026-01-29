@@ -34,8 +34,7 @@ fn main() {
     // if no candidates -> bounded discovery below
 
     // Bounded discovery
-    let roots = paths::search_roots();
-    let results = discovery::discover(&roots, &args[1], 5, 9);
+    let results = discovery::discover(&args[1], 5, 9);
 
     navigator.pick_and_jump(&results);
 }
