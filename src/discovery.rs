@@ -26,7 +26,9 @@ pub fn discover(
     max_depth: usize,
     max_results: usize,
 ) -> Vec<DiscoveryCandidate> {
-    let mut results = Vec::new();
+    let mut strong_results = Vec::new();
+    let mut fuzzy_results = Vec::new();
+
     let mut visited = HashSet::new();
     let mut queue = VecDeque::new();
 
@@ -36,9 +38,10 @@ pub fn discover(
         }
     }
 
+    let token_l = token.to_lowercase();
+
     while let Some((dir, depth)) = queue.pop_front() {
-        // TODO: Revisted this multiplication (fuzzy stuff)
-        if depth > max_depth || results.len() >= max_results {
+        if depth > max_depth {
             continue;
         }
 
@@ -64,56 +67,67 @@ pub fn discover(
                 continue;
             };
 
-            if let Some((match_kind, score)) = matches_token(name, token) {
-                results.push(DiscoveryCandidate {
+            let name_l = name.to_lowercase();
+
+            // Phase 1: Strong matches
+            if let Some((match_kind, score)) = strong_match(&name_l, &token_l) {
+                strong_results.push(DiscoveryCandidate {
                     path: path.clone(),
                     match_kind,
                     score,
                 });
-            };
+
+            // Phase 2: Fuzzy fallback
+            } else if strong_results.len() < max_results {
+                if let Some(score) = fuzzy_match(&name_l, &token_l) {
+                    fuzzy_results.push(DiscoveryCandidate {
+                        path: path.clone(),
+                        match_kind: Matchkind::Fuzzy,
+                        score: score.min(45.0),
+                    });
+                }
+            }
 
             queue.push_back((path, depth + 1));
         }
     }
 
-    // Sort by score descending and tie-break lexicographically
-    results.sort_by(|a, b| {
-        b.score
-            .total_cmp(&a.score)
-            .then_with(|| a.path.cmp(&b.path))
-    });
+    sort_candidates(& mut strong_results);
 
-    results
+    if strong_results.len() >= max_results {
+        strong_results.truncate(max_results);
+
+        return strong_results;
+    }
+
+    sort_candidates(&mut fuzzy_results);
+
+    strong_results.extend(fuzzy_results);
+    strong_results.truncate(max_results);
+
+    strong_results
 }
 
-fn matches_token(name: &str, token: &str) -> Option<(Matchkind, f32)> {
-    let name_l = name.to_lowercase();
-    let token_l = token.to_lowercase();
-
-    if name_l == token_l {
-        println!("exact");
+/// Matches using equality, prefix or substring.
+fn strong_match(name: &str, token: &str) -> Option<(Matchkind, f32)> {
+    if name == token {
         Some((Matchkind::Exact, 100.0))
-    } else if name_l.starts_with(&token_l) {
-        println!("prefix");
+    } else if name.starts_with(&token) {
         Some((Matchkind::Prefix, 70.0))
-    } else if name_l.contains(&token_l) {
-        println!("substr");
+    } else if name.contains(&token) {
         Some((Matchkind::Substring, 50.0))
-    } else if let Some(score) = fuzzy_match(&name_l, &token_l) {
-        println!("{} | {} | {}", name_l, token_l, score);
-        Some((Matchkind::Fuzzy, score.min(50.0)))
-    } else {
+    }  else {
         None
     }
 }
 
-fn fuzzy_match(candidate: &str, token: &str) -> Option<f32> {
+fn fuzzy_match(name: &str, token: &str) -> Option<f32> {
     let mut score = 0.0;
     let mut last_match = None;
     let mut chars = token.chars();
     let mut current = chars.next()?;
 
-    for (i, c) in candidate.chars().enumerate() {
+    for (i, c) in name.chars().enumerate() {
         if c == current {
             score += 10.0;
 
@@ -139,4 +153,13 @@ fn fuzzy_match(candidate: &str, token: &str) -> Option<f32> {
     }
 
     None
+}
+
+/// Sort by score descending and tie-break lexicographically
+fn sort_candidates(candidates: &mut [DiscoveryCandidate]) {
+    candidates.sort_by(|a, b| {
+        b.score
+            .total_cmp(&a.score)
+            .then_with(|| a.path.cmp(&b.path))
+    });
 }

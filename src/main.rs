@@ -1,11 +1,4 @@
-use cdd::{
-    args, config, discovery, explain,
-    history::History,
-    model,
-    navigator::{self, Navigator},
-    paths, picker, ranking,
-    session::SessionStack,
-};
+use cdd::{discovery, history::History, navigator::Navigator, paths, session::SessionStack};
 use std::env;
 
 fn main() {
@@ -42,9 +35,7 @@ fn main() {
 
     // Bounded discovery
     let roots = paths::search_roots();
-    let mut results = discovery::discover(&roots, &args[1], 5, 50);
-
-    results.truncate(9);
+    let results = discovery::discover(&roots, &args[1], 5, 9);
 
     navigator.pick_and_jump(&results);
 }

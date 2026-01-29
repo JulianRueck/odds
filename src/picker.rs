@@ -15,7 +15,7 @@ pub fn pick_directory(candidates: &[DiscoveryCandidate]) -> Option<&DiscoveryCan
         candidates.len()
     );
     for (i, candidate) in candidates.iter().enumerate() {
-        println!("{}) {} | score: {}", i + 1, candidate.path.display(), candidate.score);
+        println!("{}) {}", i + 1, candidate.path.display());
     }
 
     print!("Enter number: ");
