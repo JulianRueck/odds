@@ -41,7 +41,6 @@ pub fn normalize<P: AsRef<Path>>(path: P) -> PathBuf {
     canonicalize(p).unwrap_or_else(|_| p.to_path_buf())
 }
 
-/// Experimental feature
 fn find_git_root(start: &Path) -> Option<PathBuf> {
     let mut current = Some(start);
 

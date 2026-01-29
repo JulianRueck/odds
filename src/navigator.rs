@@ -1,6 +1,7 @@
-use crate::{history::History, session::SessionStack, picker};
-use std::path::{Path, PathBuf};
+use crate::{discovery::DiscoveryCandidate, history::History, picker, session::SessionStack};
+use std::path::{Path};
 
+#[derive(Debug)]
 pub struct Navigator<'a> {
     pub session_stack: &'a mut SessionStack,
     pub history: &'a mut History,
@@ -19,9 +20,9 @@ impl<'a> Navigator<'a> {
 
     /// Displays picker and changes current directory to user picked directory.
     /// Records it in short and longterm memory.
-    pub fn pick_and_jump(&mut self, candidates: &[PathBuf]) {
-        if let Some(dir) = picker::pick_directory(candidates) {
-            self.do_jump(&dir);
+    pub fn pick_and_jump(&mut self, candidates: &[DiscoveryCandidate]) {
+        if let Some(picked) = picker::pick_directory(candidates) {
+            self.do_jump(&picked.path);
         } else {
             println!("No directory selected.");
         }

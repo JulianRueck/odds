@@ -1,19 +1,21 @@
 use std::{
     io::{self, Write},
-    path::PathBuf,
 };
 
-pub fn pick_directory(candidates: &[PathBuf]) -> Option<PathBuf> {
+use crate::discovery::DiscoveryCandidate;
+
+pub fn pick_directory(candidates: &[DiscoveryCandidate]) -> Option<&DiscoveryCandidate> {
     if candidates.is_empty() {
         return None;
     }
-
+    // TODO: Maybe add a guard e.g. iter().take(max)
+    // Do I sync it with max_results?
     println!(
         "Select a directory (1-{}), or 0 to cancel:",
         candidates.len()
     );
-    for (i, dir) in candidates.iter().enumerate() {
-        println!("{}) {}", i + 1, dir.display());
+    for (i, candidate) in candidates.iter().enumerate() {
+        println!("{}) {} | score: {}", i + 1, candidate.path.display(), candidate.score);
     }
 
     print!("Enter number: ");
@@ -29,6 +31,6 @@ pub fn pick_directory(candidates: &[PathBuf]) -> Option<PathBuf> {
     if choice == 0 || choice > candidates.len() {
         return None;
     } else {
-        Some(candidates[choice - 1].clone())
+        Some(&candidates[choice - 1])
     }
 }

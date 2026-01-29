@@ -1,5 +1,9 @@
 use cdd::{
-    args, config, discovery, explain, history::History, model, navigator::{self, Navigator}, paths, picker, ranking,
+    args, config, discovery, explain,
+    history::History,
+    model,
+    navigator::{self, Navigator},
+    paths, picker, ranking,
     session::SessionStack,
 };
 use std::env;
@@ -13,7 +17,7 @@ fn main() {
         return;
     }
 
-    // TODO: Config; SessionStask: max_size, discovery: max_depth, max_results
+    // TODO: Config; SessionStack: max_size, discovery: max_depth, max_results
 
     let mut session_stack = SessionStack::new(10);
 
@@ -21,7 +25,7 @@ fn main() {
 
     let mut navigator = Navigator {
         session_stack: &mut session_stack,
-        history: &mut history
+        history: &mut history,
     };
 
     // Do a regular cd if it's an explicit path
@@ -38,7 +42,9 @@ fn main() {
 
     // Bounded discovery
     let roots = paths::search_roots();
-    let results = discovery::discover(&roots, &args[1], 5, 9);
-    // TODO: pass results to picker + cd + learn
+    let mut results = discovery::discover(&roots, &args[1], 5, 50);
+
+    results.truncate(9);
+
     navigator.pick_and_jump(&results);
 }
