@@ -11,8 +11,8 @@ impl FsCache {
     }
 
     pub fn list_dirs(&mut self, dir: &PathBuf) -> Vec<PathBuf> {
-        if let Some(chached) = self.dirs.get(dir) {
-            return chached.clone();
+        if let Some(cached) = self.dirs.get(dir) {
+            return cached.clone();
         }
 
         let mut results = Vec::new();
@@ -25,6 +25,8 @@ impl FsCache {
                 }
             }
         }
+
+        self.dirs.insert(dir.clone(), results.clone());
 
         results
     }

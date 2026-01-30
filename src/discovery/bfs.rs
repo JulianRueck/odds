@@ -1,11 +1,11 @@
 use std::{
     collections::{HashSet, VecDeque},
-    fs,
     path::PathBuf,
 };
 
 use super::DiscoveryCandidate;
 use super::Matchkind;
+use super::cache;
 use super::matcher::{fuzzy_match, strong_match};
 
 /// Does a BFS to discover novel paths i.e. not previously visited, scored by match kind and fuzzy.
@@ -14,6 +14,7 @@ pub fn bfs_discover(
     token: &str,
     max_depth: usize,
     max_results: usize,
+    cache: &mut cache::FsCache,
 ) -> Vec<DiscoveryCandidate> {
     let mut strong_results = Vec::new();
     let mut fuzzy_results = Vec::new();
@@ -33,20 +34,10 @@ pub fn bfs_discover(
         if depth > max_depth {
             continue;
         }
-        // TODO: Add caching; read_dir is expensive dangit
-        let entries = match fs::read_dir(&dir) {
-            Ok(e) => e,
-            Err(_) => continue,
-        };
 
-        for entry in entries.flatten() {
-            let path = entry.path();
-
-            if !path.is_dir() {
-                continue;
-            }
-
+        for path in cache.list_dirs(&dir) {
             // Skip duplicates
+           
             if !visited.insert(path.clone()) {
                 continue;
             }

@@ -1,4 +1,10 @@
-use cdd::{discovery, history::History, navigator::Navigator, paths, session::SessionStack};
+use cdd::{
+    discovery::{self},
+    history::History,
+    navigator::Navigator,
+    paths,
+    session::SessionStack,
+};
 use std::env;
 
 fn main() {
