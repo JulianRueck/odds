@@ -34,10 +34,8 @@ pub fn bfs_discover(
         if depth > max_depth {
             continue;
         }
-
         for path in cache.list_dirs(&dir) {
             // Skip duplicates
-           
             if !visited.insert(path.clone()) {
                 continue;
             }
@@ -46,7 +44,6 @@ pub fn bfs_discover(
             let Some(name) = path.file_name().and_then(|n| n.to_str()) else {
                 continue;
             };
-
             let name_l = name.to_lowercase();
 
             // Phase 1: Strong matches

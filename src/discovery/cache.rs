@@ -1,5 +1,7 @@
 use std::{collections::HashMap, fs, path::PathBuf};
 
+use crate::paths;
+
 #[derive(Debug)]
 pub struct FsCache {
     dirs: HashMap<PathBuf, Vec<PathBuf>>,
@@ -7,17 +9,21 @@ pub struct FsCache {
 
 impl FsCache {
     pub fn new() -> Self {
-        Self { dirs: HashMap::new() }
+        Self {
+            dirs: HashMap::new(),
+        }
     }
 
     pub fn list_dirs(&mut self, dir: &PathBuf) -> Vec<PathBuf> {
-        if let Some(cached) = self.dirs.get(dir) {
+        let normalized_dir = paths::normalize(dir);
+
+        if let Some(cached) = self.dirs.get(&normalized_dir) {
             return cached.clone();
         }
 
         let mut results = Vec::new();
 
-        if let Ok(entries) = fs::read_dir(dir) {
+        if let Ok(entries) = fs::read_dir(&normalized_dir) {
             for entry in entries.flatten() {
                 let path = entry.path();
                 if path.is_dir() {
@@ -26,7 +32,7 @@ impl FsCache {
             }
         }
 
-        self.dirs.insert(dir.clone(), results.clone());
+        self.dirs.insert(normalized_dir.clone(), results.clone());
 
         results
     }
