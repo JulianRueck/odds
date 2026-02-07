@@ -69,27 +69,7 @@ pub fn bfs_discover(
         }
     }
 
-    sort_candidates(&mut strong_results);
-
-    if strong_results.len() >= max_results {
-        strong_results.truncate(max_results);
-
-        return strong_results;
-    }
-
-    sort_candidates(&mut fuzzy_results);
-
     strong_results.extend(fuzzy_results);
-    strong_results.truncate(max_results);
 
     strong_results
-}
-
-/// Sort by score descending and tie-break lexicographically.
-fn sort_candidates(candidates: &mut [DiscoveryCandidate]) {
-    candidates.sort_by(|a, b| {
-        b.score
-            .total_cmp(&a.score)
-            .then_with(|| a.path.cmp(&b.path))
-    });
 }

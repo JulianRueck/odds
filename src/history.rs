@@ -5,12 +5,11 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
-#[derive(Debug, Serialize, Deserialize, Default)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct HistoryEntry {
     pub path: PathBuf,
     pub visits: u64,
     pub last_visited: u64,
-    pub total_time: u64, // Time spent in dir optional4now
 }
 
 #[derive(Debug, Serialize, Deserialize, Default)]
@@ -36,7 +35,6 @@ impl History {
                 path: path.clone(),
                 visits: 1,
                 last_visited: now,
-                total_time: 0,
             });
         }
     }
@@ -65,6 +63,24 @@ impl History {
         let data = serde_json::to_string_pretty(self)?;
         fs::write(path, data)?;
         Ok(())
+    }
+
+    pub fn visit_count(&self, path: &PathBuf) -> u64 {
+        self.entries
+            .iter()
+            .find(|e| e.path == *path)
+            .map(|e| e.visits)
+            .unwrap_or(0)
+    }
+
+    pub fn seconds_since_last_visit(&self, path: &PathBuf) -> Option<u64> {
+        self.entries.iter().find(|e| e.path == *path).map(|e| {
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs()
+                - e.last_visited
+        })
     }
 }
 

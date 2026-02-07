@@ -53,6 +53,12 @@ impl SessionStack {
         &self.entries
     }
 
+    pub fn contains(&self, path: &PathBuf) -> bool {
+        self.entries
+        .iter()
+        .any(|e| e.path == *path)
+    }
+
     /// Human-readable stack (for `cdd stack`).
     pub fn formatted(&self) -> Vec<String> {
             self.entries
