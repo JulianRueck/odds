@@ -14,6 +14,9 @@ impl FsCache {
         }
     }
 
+    /// Returns directories contained within specified directory.
+    /// Either from cache if seen before,
+    /// or from the file system if it's the first time.
     pub fn list_dirs(&mut self, dir: &PathBuf) -> Vec<PathBuf> {
         let normalized_dir = paths::normalize(dir);
 

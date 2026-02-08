@@ -11,7 +11,7 @@ pub struct SessionStack {
     max_size: usize,
     entries: Vec<SessionEntry>
 }
-
+// TODO: persist session somewhere. Currently has no value since a new instance of this stack is created every run.
 impl SessionStack {
     /// Create a new empty session stack.
     pub fn new(max_size: usize) -> Self {

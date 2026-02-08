@@ -1,13 +1,15 @@
+use std::ops::Deref;
+
 use crate::{
     discovery::{DiscoveryCandidate, Matchkind},
-    history::{History},
+    history::History,
     session::SessionStack,
 };
 
 /// Determines how much to 'trust' certain signals.
 /// Some of these values might seem duplicates (matchers.rs).
 /// However, one should consider those signal strength.
-/// Here signals are modulated.
+/// This modulates those signals.
 #[derive(Debug)]
 pub struct MlWeights {
     pub exact: f32,
@@ -33,24 +35,63 @@ impl Default for MlWeights {
     }
 }
 
+/// Denotes confidence in a candidate in order effectuate auto jump functionality.
+#[derive(Debug)]
+pub struct ConfidenceRules {
+    pub min_score: f32,
+    pub min_gap: f32,
+}
+
+impl Default for ConfidenceRules {
+    fn default() -> Self {
+        Self {
+            min_score: 120.0,
+            min_gap: 20.0,
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct RankedCandidate {
+    pub candidate: DiscoveryCandidate,
+    pub ml_score: f32,
+}
+
+impl Deref for RankedCandidate {
+    type Target = DiscoveryCandidate;
+    fn deref(&self) -> &Self::Target {
+        &self.candidate
+    }
+}
+
 pub fn rank_candidates(
-    mut candidates: Vec<DiscoveryCandidate>,
+    candidates: Vec<DiscoveryCandidate>,
     history: &History,
     session_stack: &SessionStack,
     weights: &MlWeights,
     max_results: usize,
-) -> Vec<DiscoveryCandidate> {
-    candidates.sort_by(|a, b| {
-        let sa = score_candidate(a, history, session_stack, weights);
-        let sb = score_candidate(b, history, session_stack, weights);
+) -> Vec<RankedCandidate> {
+    let mut ranked: Vec<RankedCandidate> = candidates
+        .into_iter()
+        .map(|c| {
+            let ml_score = score_candidate(&c, history, session_stack, weights);
+            RankedCandidate {
+                candidate: c,
+                ml_score,
+            }
+        })
+        .collect();
 
-        // Sort by score descending and tie-break lexicographically.
-        sb.total_cmp(&sa).then_with(|| a.path.cmp(&b.path))
+    // Sort by score descending and tie-break lexicographically.
+    ranked.sort_by(|a, b| {
+        b.ml_score
+            .total_cmp(&a.ml_score)
+            .then_with(|| a.candidate.path.cmp(&b.candidate.path))
     });
 
-    candidates.truncate(max_results);
+    ranked.truncate(max_results);
 
-    candidates
+    ranked
 }
 
 fn score_candidate(

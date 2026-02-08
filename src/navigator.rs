@@ -1,9 +1,12 @@
-use crate::{discovery::DiscoveryCandidate, history::History, picker, session::SessionStack};
+use crate::{history::History, picker, ranking::RankedCandidate, session::SessionStack};
 use std::path::Path;
 
 /// Changes current directory and records it in short and longterm memory.
 pub fn do_jump(dir: &Path, history: &mut History, session_stack: &mut SessionStack) {
     println!("{}", dir.display());
+
+    let derp = SessionStack::formatted(&session_stack);
+    println!("{:#?}", derp);
 
     session_stack.push(&dir);
 
@@ -13,7 +16,11 @@ pub fn do_jump(dir: &Path, history: &mut History, session_stack: &mut SessionSta
 
 /// Displays picker and changes current directory to user picked directory.
 /// Records it in short and longterm memory.
-pub fn pick_and_jump(candidates: &[DiscoveryCandidate], history: &mut History, session_stack: &mut SessionStack) {
+pub fn pick_and_jump(
+    candidates: &[RankedCandidate],
+    history: &mut History,
+    session_stack: &mut SessionStack,
+) {
     if let Some(picked) = picker::pick_directory(candidates) {
         do_jump(&picked.path, history, session_stack);
     } else {

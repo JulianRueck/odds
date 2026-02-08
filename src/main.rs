@@ -1,9 +1,8 @@
 use cdd::{
     discovery::{self},
     history::History,
-    navigator,
-    paths,
-    ranking::{self, MlWeights},
+    navigator, paths, picker,
+    ranking::{self, ConfidenceRules, MlWeights},
     session::SessionStack,
 };
 use std::env;
@@ -11,7 +10,6 @@ use std::env;
 fn main() {
     let args: Vec<String> = env::args().collect();
 
-    // Exit if arguments are shit; TODO: Add some more checks maybe
     if args.len() < 2 {
         eprintln!("Usage: cdd <name>");
         return;
@@ -38,17 +36,30 @@ fn main() {
     // if ambigous -> picker
     // if no candidates -> bounded discovery below
 
-    // Bounded discovery
-    let discovery_candidates = discovery::discover(token, max_depth, max_results);
+    // TODO: Fetch candidates from history and or session in order to be able to skip bfs for a confident pick.
+    let model_candidates = History::load();
 
     // ML ranking
     let ranked_candidates = ranking::rank_candidates(
-        discovery_candidates,
+        model_candidates,
         &history,
         &session_stack,
         &MlWeights::default(),
         max_results,
     );
 
+    // If confident auto jump
+    if let Some(choice) = picker::confident_pick(&ranked_candidates, &ConfidenceRules::default()) {
+        navigator::do_jump(&choice.candidate.path, &mut history, &mut session_stack);
+
+        return;
+    }
+
+    // Ambigious -> picker
+
+    // Bounded discovery
+    let discovery_candidates = discovery::discover(token, max_depth, max_results);
+
+    // Picker
     navigator::pick_and_jump(&ranked_candidates, &mut history, &mut session_stack);
 }
