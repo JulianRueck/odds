@@ -1,23 +1,29 @@
-use std::{path::{Path, PathBuf}};
-use crate::{paths};
+use serde::{Deserialize, Serialize};
+use std::{
+    fs, io,
+    path::{Path, PathBuf},
+};
 
-#[derive(Debug)]
+use crate::paths;
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct SessionEntry {
     pub path: PathBuf,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize, Default)]
 pub struct SessionStack {
     max_size: usize,
-    entries: Vec<SessionEntry>
+    entries: Vec<SessionEntry>,
 }
-// TODO: persist session somewhere. Currently has no value since a new instance of this stack is created every run.
+const SESSION_FILE: &str = "session.json";
+
 impl SessionStack {
     /// Create a new empty session stack.
     pub fn new(max_size: usize) -> Self {
-        Self { 
-            max_size, 
-            entries:Vec::new() 
+        Self {
+            max_size,
+            entries: Vec::new(),
         }
     }
 
@@ -40,7 +46,6 @@ impl SessionStack {
         if self.entries.len() > self.max_size {
             self.entries.truncate(self.max_size);
         }
-
     }
 
     /// Get current directory.
@@ -54,14 +59,12 @@ impl SessionStack {
     }
 
     pub fn contains(&self, path: &PathBuf) -> bool {
-        self.entries
-        .iter()
-        .any(|e| e.path == *path)
+        self.entries.iter().any(|e| e.path == *path)
     }
 
     /// Human-readable stack (for `cdd stack`).
     pub fn formatted(&self) -> Vec<String> {
-            self.entries
+        self.entries
             .iter()
             .enumerate()
             .map(|(i, e)| {
@@ -72,5 +75,30 @@ impl SessionStack {
                 }
             })
             .collect()
+    }
+
+    /// Load the session stack. TODO: Same as save
+    pub fn load() -> io::Result<Self> {
+        let path = paths::persistence_path(SESSION_FILE);
+
+        if !path.exists() {
+            return Ok(Self::default());
+        }
+
+        let data = fs::read_to_string(path)?;
+        let session = serde_json::from_str(&data)?;
+
+        Ok(session)
+    }
+
+    /// TODO: Create super persitence 'class' for this and history
+    pub fn save(&self) -> io::Result<()> {
+        let path = paths::persistence_path(SESSION_FILE);
+
+        if let Some(parent) = path.parent() {
+            fs::create_dir_all(parent)?;
+        }
+
+        fs::write(path, serde_json::to_string_pretty(self)?)
     }
 }

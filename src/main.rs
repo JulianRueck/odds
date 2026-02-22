@@ -16,8 +16,8 @@ fn main() {
     }
 
     // TODO: Config; SessionStack: max_size, discovery: max_depth, max_results
-
-    let mut session_stack = SessionStack::new(10);
+    // TODO: Make session expire
+    let mut session_stack = SessionStack::load().unwrap_or_else(|_| SessionStack::new(10));
     let mut history = History::load().unwrap_or_default();
 
     let token = &args[1];
@@ -31,12 +31,6 @@ fn main() {
         return;
     }
 
-    // Model / history lookup
-    // if confident -> cd
-    // if ambigous -> picker
-    // if no candidates -> bounded discovery below
-
-    // TODO: Fetch candidates from history and or session in order to be able to skip bfs for a confident pick.
     let history_candidates = history.history_candidates(token);
 
     let ranked_candidates = ranking::rank_candidates(

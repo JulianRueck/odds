@@ -1,3 +1,4 @@
+
 use serde::{Deserialize, Serialize};
 use std::{
     fs, io,
@@ -6,6 +7,7 @@ use std::{
 };
 
 use crate::discovery::{DiscoveryCandidate, Matchkind};
+use crate::paths;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct HistoryEntry {
@@ -19,7 +21,7 @@ pub struct History {
     pub entries: Vec<HistoryEntry>,
 }
 
-const HISTORY_PATH: &str = ".local/share/cdd/history.json";
+const HISTORY_FILE: &str = "history.json";
 
 impl History {
     /// Record a visit in memory.
@@ -43,7 +45,7 @@ impl History {
 
     /// Load the history.
     pub fn load() -> io::Result<Self> {
-        let path = history_file();
+        let path = paths::persistence_path(HISTORY_FILE);
 
         if !path.exists() {
             return Ok(Self::default());
@@ -51,20 +53,19 @@ impl History {
 
         let data = fs::read_to_string(path)?;
         let history = serde_json::from_str(&data)?;
+        
         Ok(history)
     }
 
     /// Persist state into history.
     pub fn save(&self) -> io::Result<()> {
-        let path = history_file();
+        let path = paths::persistence_path(HISTORY_FILE);
 
         if let Some(parent) = path.parent() {
             fs::create_dir_all(parent)?;
         }
 
-        let data = serde_json::to_string_pretty(self)?;
-        fs::write(path, data)?;
-        Ok(())
+        fs::write(path, serde_json::to_string_pretty(self)?)
     }
 
     /// Collect all candidate entries from history.
@@ -104,9 +105,4 @@ impl History {
                 - e.last_visited
         })
     }
-}
-
-fn history_file() -> PathBuf {
-    let home = std::env::var("HOME").unwrap_or_else(|_| ".".into());
-    PathBuf::from(home).join(HISTORY_PATH)
 }

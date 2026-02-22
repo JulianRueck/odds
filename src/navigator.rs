@@ -6,6 +6,7 @@ pub fn do_jump(dir: &Path, history: &mut History, session_stack: &mut SessionSta
     println!("{}", dir.display());
 
     session_stack.push(&dir);
+    session_stack.save().ok();
 
     history.record_visit(&dir.to_path_buf());
     history.save().ok();
@@ -18,6 +19,10 @@ pub fn pick_and_jump(
     history: &mut History,
     session_stack: &mut SessionStack,
 ) {
+    // TODO: If only one result might as well auto jump.
+    // if (candidates.len() == 1) {
+    //     do_jump(dir, history, session_stack);
+    // }
     if let Some(picked) = picker::pick_directory(candidates) {
         do_jump(&picked.path, history, session_stack);
     } else {
