@@ -107,7 +107,7 @@ fn score_candidate(
         Matchkind::Fuzzy => weights.fuzzy,
     };
 
-    // History frequency.
+    // Frequency.
     let frequency = history.visit_count(&candidate.path) as f32;
     score += frequency * weights.frequency;
 

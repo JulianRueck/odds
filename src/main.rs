@@ -37,11 +37,10 @@ fn main() {
     // if no candidates -> bounded discovery below
 
     // TODO: Fetch candidates from history and or session in order to be able to skip bfs for a confident pick.
-    let model_candidates = History::load();
+    let history_candidates = history.history_candidates(token);
 
-    // ML ranking
     let ranked_candidates = ranking::rank_candidates(
-        model_candidates,
+        history_candidates,
         &history,
         &session_stack,
         &MlWeights::default(),
@@ -59,6 +58,14 @@ fn main() {
 
     // Bounded discovery
     let discovery_candidates = discovery::discover(token, max_depth, max_results);
+
+    let ranked_candidates = ranking::rank_candidates(
+        discovery_candidates,
+        &history,
+        &session_stack,
+        &MlWeights::default(),
+        max_results,
+    );
 
     // Picker
     navigator::pick_and_jump(&ranked_candidates, &mut history, &mut session_stack);

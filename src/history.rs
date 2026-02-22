@@ -5,6 +5,8 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
+use crate::discovery::{DiscoveryCandidate, Matchkind};
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct HistoryEntry {
     pub path: PathBuf,
@@ -63,6 +65,26 @@ impl History {
         let data = serde_json::to_string_pretty(self)?;
         fs::write(path, data)?;
         Ok(())
+    }
+
+    /// Collect all candidate entries from history.
+    pub fn history_candidates(&self, token: &str) -> Vec<DiscoveryCandidate> {
+        self.entries
+            .iter()
+            .filter_map(|entry| {
+                entry
+                    .path
+                    .file_name()
+                    .and_then(|name| name.to_str())
+                    .filter(|&name| name == token)
+                    .map(|_| DiscoveryCandidate {
+                        // TODO: revisit this use of DiscoveryCandidate
+                        path: entry.path.clone(),
+                        match_kind: Matchkind::Exact,
+                        score: 0.00,
+                    })
+            })
+            .collect()
     }
 
     pub fn visit_count(&self, path: &PathBuf) -> u64 {

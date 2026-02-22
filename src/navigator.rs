@@ -5,9 +5,6 @@ use std::path::Path;
 pub fn do_jump(dir: &Path, history: &mut History, session_stack: &mut SessionStack) {
     println!("{}", dir.display());
 
-    let derp = SessionStack::formatted(&session_stack);
-    println!("{:#?}", derp);
-
     session_stack.push(&dir);
 
     history.record_visit(&dir.to_path_buf());

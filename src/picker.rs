@@ -47,8 +47,6 @@ pub fn confident_pick<'a>(
     let first = &candidates[0];
     let second = &candidates[1];
 
-    println!("first: {:#?} | second: {:#?}", first, second);
-
     if first.ml_score >= rules.min_score && first.ml_score - second.ml_score >= rules.min_gap {
         Some(&first)
     } else {
