@@ -25,7 +25,7 @@ pub fn pick_and_jump(
             do_jump(&candidate.path, history, session_stack);
         };
     }
-    if let Some(picked) = picker::pick_directory(candidates) {
+    else if let Some(picked) = picker::pick_directory(candidates) {
         do_jump(&picked.path, history, session_stack);
     } else {
         println!("No directory selected.");
