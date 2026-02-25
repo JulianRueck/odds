@@ -9,3 +9,6 @@ pub mod paths;
 pub mod ranking;
 pub mod session;
 pub mod picker;
+
+#[cfg(test)]
+mod tests;
