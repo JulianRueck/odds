@@ -57,6 +57,15 @@ pub struct RankedCandidate {
     pub ml_score: f32,
 }
 
+impl Default for RankedCandidate {
+    fn default() -> Self {
+        Self {
+            candidate: DiscoveryCandidate::default(),
+            ml_score: 0.0,
+        }
+    }
+}
+
 impl Deref for RankedCandidate {
     type Target = DiscoveryCandidate;
     fn deref(&self) -> &Self::Target {

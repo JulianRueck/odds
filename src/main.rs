@@ -42,7 +42,7 @@ fn main() {
     );
 
     // If confident auto jump
-    if let Some(choice) = picker::confident_pick(&ranked_candidates, &ConfidenceRules::default()) {
+    if let Some(choice) = picker::confident_pick(&ranked_candidates, ConfidenceRules::default()) {
         navigator::do_jump(&choice.candidate.path, &mut history, &mut session_stack);
 
         return;
