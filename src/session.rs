@@ -1,7 +1,9 @@
 use serde::{Deserialize, Serialize};
 use std::{
-    fs, io,
+    fs,
+    io,
     path::{Path, PathBuf},
+    time::{SystemTime, UNIX_EPOCH},
 };
 
 use crate::paths;
@@ -15,8 +17,10 @@ pub struct SessionEntry {
 pub struct SessionStack {
     max_size: usize,
     entries: Vec<SessionEntry>,
+    saved_at: u64,
 }
 const SESSION_FILE: &str = "session.json";
+const SESSION_EXPIRY_SECS: u64 = 86400; // 1 day
 
 impl SessionStack {
     /// Create a new empty session stack.
@@ -24,6 +28,7 @@ impl SessionStack {
         Self {
             max_size,
             entries: Vec::new(),
+            saved_at: time_now(),
         }
     }
 
@@ -81,12 +86,13 @@ impl SessionStack {
     pub fn load() -> io::Result<Self> {
         let path = paths::persistence_path(SESSION_FILE);
 
-        if !path.exists() {
-            return Ok(Self::default());
-        }
-
         let data = fs::read_to_string(path)?;
-        let session = serde_json::from_str(&data)?;
+        let session: Self = serde_json::from_str(&data)?;
+
+        // Expire sessions older than SESSION_EXPIRY_SECS; saturating_sub guards against clock skew.
+        if time_now().saturating_sub(session.saved_at) > SESSION_EXPIRY_SECS {
+            return Err(io::Error::new(io::ErrorKind::Other, "Session expired."));
+        }
 
         Ok(session)
     }
@@ -101,4 +107,11 @@ impl SessionStack {
 
         fs::write(path, serde_json::to_string_pretty(self)?)
     }
+}
+
+fn time_now() -> u64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs()
 }
