@@ -25,7 +25,7 @@ impl Default for DiscoveryCandidate {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Matchkind {
     Exact,
     Prefix,
