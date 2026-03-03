@@ -6,10 +6,12 @@ pub fn do_jump(dir: &Path, history: &mut History, session_stack: &mut SessionSta
     println!("{}", dir.display());
 
     session_stack.push(&dir);
-    session_stack.save().ok();
+    // TODO: maybe handle potential errors
+    let _ = session_stack.save();
 
     history.record_visit(&dir.to_path_buf());
-    history.save().ok();
+    // TODO: maybe handle potential errors
+    let _ = history.save();
 }
 
 /// Displays picker and changes current directory to user picked directory.

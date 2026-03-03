@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::{
-    fs,
-    io,
+    fs, io,
     path::{Path, PathBuf},
     time::{SystemTime, UNIX_EPOCH},
 };
@@ -21,17 +20,9 @@ pub struct SessionStack {
 }
 const SESSION_FILE: &str = "session.json";
 const SESSION_EXPIRY_SECS: u64 = 86400; // 1 day
+const MAX_SIZE: usize = 10;
 
 impl SessionStack {
-    /// Create a new empty session stack.
-    pub fn new(max_size: usize) -> Self {
-        Self {
-            max_size,
-            entries: Vec::new(),
-            saved_at: time_now(),
-        }
-    }
-
     /// Push a directory onto the stack.
     pub fn push<P: AsRef<Path>>(&mut self, path: P) {
         let path = paths::normalize(path);
@@ -89,12 +80,27 @@ impl SessionStack {
         let data = fs::read_to_string(path)?;
         let session: Self = serde_json::from_str(&data)?;
 
-        // Expire sessions older than SESSION_EXPIRY_SECS; saturating_sub guards against clock skew.
-        if time_now().saturating_sub(session.saved_at) > SESSION_EXPIRY_SECS {
-            return Err(io::Error::new(io::ErrorKind::Other, "Session expired."));
+        Ok(session)
+    }
+
+    /// Load the existing session stack or create and return a new one if the old one is expired or it doesn't exist yet.
+    pub fn load_or_new() -> Self {
+        if let Ok(session) = Self::load() {
+            // Expire sessions older than SESSION_EXPIRY_SECS; saturating_sub guards against clock skew.
+            if time_now().saturating_sub(session.saved_at) < SESSION_EXPIRY_SECS {
+                return session;
+            }
         }
 
-        Ok(session)
+        let new_session = Self {
+            max_size: MAX_SIZE,
+            entries: Vec::new(),
+            saved_at: time_now(),
+        };
+        // TODO: maybe handle potential errors
+        let _ = Self::save(&new_session);
+
+        new_session
     }
 
     /// TODO: Create super persitence 'class' for this and history
