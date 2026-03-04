@@ -1,4 +1,4 @@
-use crate::{picker, ranking::RankedCandidate, persistence::History, persistence::SessionStack,};
+use crate::{persistence::History, persistence::SessionStack, picker, ranking::RankedCandidate};
 use std::path::Path;
 
 /// Changes current directory and records it in short and longterm memory.
@@ -26,8 +26,7 @@ pub fn pick_and_jump(
         if let Some(candidate) = candidates.first() {
             do_jump(&candidate.path, history, session_stack);
         };
-    }
-    else if let Some(picked) = picker::pick_directory(candidates) {
+    } else if let Some(picked) = picker::pick_directory(candidates) {
         do_jump(&picked.path, history, session_stack);
     } else {
         println!("No directory selected.");

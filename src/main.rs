@@ -1,8 +1,10 @@
 use cdd::{
     discovery::{self},
-    navigator, paths, picker,
+    navigator, paths,
+    persistence::History,
+    persistence::SessionStack,
+    picker,
     ranking::{self, ConfidenceRules, MlWeights},
-    persistence::History, persistence::SessionStack,
 };
 use std::env;
 
