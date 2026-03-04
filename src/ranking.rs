@@ -2,8 +2,8 @@ use std::ops::Deref;
 
 use crate::{
     discovery::{DiscoveryCandidate, Matchkind},
-    history::History,
-    session::SessionStack,
+    persistence::History,
+    persistence::SessionStack,
 };
 
 /// Determines how much to 'trust' certain signals.

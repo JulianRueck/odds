@@ -2,9 +2,9 @@ use std::path::PathBuf;
 
 use crate::{
     discovery::{DiscoveryCandidate, Matchkind},
-    history::History,
+    persistence::History,
+    persistence::SessionStack,
     ranking::{MlWeights, rank_candidates},
-    session::SessionStack,
 };
 
 #[test]
