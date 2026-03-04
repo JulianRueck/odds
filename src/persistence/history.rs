@@ -1,4 +1,3 @@
-
 use serde::{Deserialize, Serialize};
 use std::{
     fs, io,
@@ -6,8 +5,11 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
-use crate::discovery::{DiscoveryCandidate, Matchkind};
-use crate::paths;
+use crate::{
+    discovery::{DiscoveryCandidate, Matchkind},
+    paths,
+    persistence::util::Persistable,
+};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct HistoryEntry {
@@ -53,7 +55,7 @@ impl History {
 
         let data = fs::read_to_string(path)?;
         let history = serde_json::from_str(&data)?;
-        
+
         Ok(history)
     }
 
@@ -106,3 +108,5 @@ impl History {
         })
     }
 }
+
+impl Persistable for History {}

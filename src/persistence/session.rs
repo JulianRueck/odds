@@ -5,7 +5,7 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
-use crate::paths;
+use crate::{paths, persistence::util::Persistable};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SessionEntry {
@@ -121,3 +121,5 @@ fn time_now() -> u64 {
         .unwrap_or_default()
         .as_secs()
 }
+
+impl Persistable for SessionStack {}
