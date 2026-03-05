@@ -1,14 +1,12 @@
 use serde::{Deserialize, Serialize};
 use std::{
-    fs, io,
     path::PathBuf,
     time::{SystemTime, UNIX_EPOCH},
 };
 
 use crate::{
     discovery::{DiscoveryCandidate, Matchkind},
-    paths,
-    persistence::util::Persistable,
+    persistence::persistable::Persistable,
 };
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -22,8 +20,6 @@ pub struct HistoryEntry {
 pub struct History {
     pub entries: Vec<HistoryEntry>,
 }
-
-const HISTORY_FILE: &str = "history.json";
 
 impl History {
     /// Record a visit in memory.
@@ -43,31 +39,6 @@ impl History {
                 last_visited: now,
             });
         }
-    }
-
-    /// Load the history.
-    pub fn load() -> io::Result<Self> {
-        let path = paths::persistence_path(HISTORY_FILE);
-
-        if !path.exists() {
-            return Ok(Self::default());
-        }
-
-        let data = fs::read_to_string(path)?;
-        let history = serde_json::from_str(&data)?;
-
-        Ok(history)
-    }
-
-    /// Persist state into history.
-    pub fn save(&self) -> io::Result<()> {
-        let path = paths::persistence_path(HISTORY_FILE);
-
-        if let Some(parent) = path.parent() {
-            fs::create_dir_all(parent)?;
-        }
-
-        fs::write(path, serde_json::to_string_pretty(self)?)
     }
 
     /// Collect all candidate entries from history.
@@ -109,4 +80,6 @@ impl History {
     }
 }
 
-impl Persistable for History {}
+impl Persistable for History {
+    const FILE: &'static str = "history.json";
+}

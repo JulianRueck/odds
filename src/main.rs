@@ -1,8 +1,7 @@
 use cdd::{
     discovery::{self},
     navigator, paths,
-    persistence::History,
-    persistence::SessionStack,
+    persistence::{History, SessionStack, persistable::Persistable},
     picker,
     ranking::{self, ConfidenceRules, MlWeights},
 };
@@ -19,7 +18,7 @@ fn main() {
     // TODO: Config; SessionStack: max_size, discovery: max_depth, max_results
     // TODO: Make session expire
     let mut session_stack = SessionStack::load_or_new();
-    let mut history = History::load().unwrap_or_default();
+    let mut history = History::load().unwrap(); // TODO: Error handling 
 
     let token = &args[1];
     let max_results = 9;

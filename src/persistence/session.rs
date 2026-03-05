@@ -1,11 +1,10 @@
 use serde::{Deserialize, Serialize};
 use std::{
-    fs, io,
     path::{Path, PathBuf},
     time::{SystemTime, UNIX_EPOCH},
 };
 
-use crate::{paths, persistence::util::Persistable};
+use crate::{paths, persistence::persistable::Persistable};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SessionEntry {
@@ -18,7 +17,7 @@ pub struct SessionStack {
     entries: Vec<SessionEntry>,
     saved_at: u64,
 }
-const SESSION_FILE: &str = "session.json";
+
 const SESSION_EXPIRY_SECS: u64 = 86400; // 1 day
 const MAX_SIZE: usize = 10;
 
@@ -73,16 +72,6 @@ impl SessionStack {
             .collect()
     }
 
-    /// Load the session stack. TODO: Same as save
-    pub fn load() -> io::Result<Self> {
-        let path = paths::persistence_path(SESSION_FILE);
-
-        let data = fs::read_to_string(path)?;
-        let session: Self = serde_json::from_str(&data)?;
-
-        Ok(session)
-    }
-
     /// Load the existing session stack or create and return a new one if the old one is expired or it doesn't exist yet.
     pub fn load_or_new() -> Self {
         if let Ok(session) = Self::load() {
@@ -102,17 +91,6 @@ impl SessionStack {
 
         new_session
     }
-
-    /// TODO: Create super persitence 'class' for this and history
-    pub fn save(&self) -> io::Result<()> {
-        let path = paths::persistence_path(SESSION_FILE);
-
-        if let Some(parent) = path.parent() {
-            fs::create_dir_all(parent)?;
-        }
-
-        fs::write(path, serde_json::to_string_pretty(self)?)
-    }
 }
 
 fn time_now() -> u64 {
@@ -122,4 +100,6 @@ fn time_now() -> u64 {
         .as_secs()
 }
 
-impl Persistable for SessionStack {}
+impl Persistable for SessionStack {
+    const FILE: &'static str = "session.json";
+}

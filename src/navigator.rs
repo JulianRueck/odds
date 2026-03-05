@@ -1,4 +1,4 @@
-use crate::{persistence::History, persistence::SessionStack, picker, ranking::RankedCandidate};
+use crate::{persistence::{History, SessionStack, persistable::Persistable}, picker, ranking::RankedCandidate};
 use std::path::Path;
 
 /// Changes current directory and records it in short and longterm memory.

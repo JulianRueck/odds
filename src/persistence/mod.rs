@@ -1,7 +1,6 @@
 pub mod history;
 pub mod session;
-
-mod util;
+pub mod persistable;
 
 pub use history::History;
 pub use session::SessionStack;
