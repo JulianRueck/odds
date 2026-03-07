@@ -116,17 +116,27 @@ fn score_candidate(
         Matchkind::Fuzzy => weights.fuzzy,
     };
 
-    // Frequency.
-    let frequency = history.visit_count(&candidate.path) as f32;
-    score += frequency * weights.frequency;
+    // Calculate Exponential Decay (Frecency).
+    // λ (lambda) determines how fast scores drop.
+    let lambda = 0.0001;
 
-    // Recency
+    let frequency = history.visit_count(&candidate.path) as f32;
+
     if let Some(seconds_ago) = history.seconds_since_last_visit(&candidate.path) {
-        let recency_score = 1.0 / (1.0 + seconds_ago as f32);
-        score += recency_score * weights.recency;
+        // Frecency = Frequency * e^(-λ * t)
+        let decay_factor = (-lambda * seconds_ago as f32).exp();
+        let frecency_score = frequency * decay_factor;
+
+        score += frecency_score * weights.frequency;
+
+        //Optional: Keep a small 'recency' boost for very recent jumps (last 60s)
+        // if seconds_ago < 60 {
+        //     score += weights.recency;
+        // }
+
     }
 
-    // Session boost
+    // Session boost.
     if session_stack.contains(&candidate.path) {
         score += weights.session_stack;
     }

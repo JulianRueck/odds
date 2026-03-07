@@ -16,7 +16,6 @@ fn main() {
     }
 
     // TODO: Config; SessionStack: max_size, discovery: max_depth, max_results
-    // TODO: Make session expire
     let mut session_stack = SessionStack::load_or_new();
     let mut history = History::load().unwrap(); // TODO: Error handling 
 
