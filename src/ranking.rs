@@ -16,8 +16,7 @@ pub struct MlWeights {
     pub prefix: f32,
     pub substring: f32,
     pub fuzzy: f32,
-    pub frequency: f32,
-    pub recency: f32,
+    pub frecency: f32,
     pub session_stack: f32,
 }
 
@@ -28,8 +27,7 @@ impl Default for MlWeights {
             prefix: 70.0,
             substring: 50.0,
             fuzzy: 20.0,
-            frequency: 2.0,
-            recency: 10.0,
+            frecency: 10.0,
             session_stack: 5.0,
         }
     }
@@ -97,7 +95,7 @@ pub fn rank_candidates(
             .total_cmp(&a.ml_score)
             .then_with(|| a.candidate.path.cmp(&b.candidate.path))
     });
-
+    
     ranked.truncate(max_results);
 
     ranked
@@ -118,7 +116,8 @@ fn score_candidate(
 
     // Calculate Exponential Decay (Frecency).
     // λ (lambda) determines how fast scores drop.
-    let lambda = 0.0001;
+    // 0.000002 makes for a 3-day half-life.
+    let lambda = 0.000002;
 
     let frequency = history.visit_count(&candidate.path) as f32;
 
@@ -126,13 +125,9 @@ fn score_candidate(
         // Frecency = Frequency * e^(-λ * t)
         let decay_factor = (-lambda * seconds_ago as f32).exp();
         let frecency_score = frequency * decay_factor;
-
-        score += frecency_score * weights.frequency;
-
-        //Optional: Keep a small 'recency' boost for very recent jumps (last 60s)
-        // if seconds_ago < 60 {
-        //     score += weights.recency;
-        // }
+        println!("Frecency score ({:#?}): {}", &candidate.path, frecency_score);
+        score += frecency_score * weights.frecency;
+        println!("score: {}", score)
 
     }
 

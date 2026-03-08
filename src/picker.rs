@@ -54,7 +54,7 @@ pub fn select_index(candidates: &[RankedCandidate], strategy: SelectionStrategy)
         }
 
         SelectionStrategy::Confident { rules } => {
-            if candidates.len() < 2 {
+            if candidates.len() <= 1 {
                 return (!candidates.is_empty()).then_some(0);
             }
 

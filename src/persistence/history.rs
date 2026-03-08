@@ -1,11 +1,11 @@
 use serde::{Deserialize, Serialize};
 use std::{
-    path::PathBuf,
+    path::{PathBuf},
     time::{SystemTime, UNIX_EPOCH},
 };
 
 use crate::{
-    discovery::{DiscoveryCandidate, Matchkind},
+    discovery::{DiscoveryCandidate, matcher::match_candidate},
     persistence::persistable::Persistable,
 };
 
@@ -43,20 +43,14 @@ impl History {
 
     /// Collect all candidate entries from history.
     pub fn history_candidates(&self, token: &str) -> Vec<DiscoveryCandidate> {
+        let token_l = token.to_lowercase();
+
         self.entries
             .iter()
             .filter_map(|entry| {
-                entry
-                    .path
-                    .file_name()
-                    .and_then(|name| name.to_str())
-                    .filter(|&name| name == token)
-                    .map(|_| DiscoveryCandidate {
-                        // TODO: revisit this use of DiscoveryCandidate
-                        path: entry.path.clone(),
-                        match_kind: Matchkind::Exact,
-                        score: 0.00,
-                    })
+                let name_l = entry.path.file_name()?.to_str()?.to_lowercase();
+
+                match_candidate(&entry.path, &name_l, &token_l)
             })
             .collect()
     }

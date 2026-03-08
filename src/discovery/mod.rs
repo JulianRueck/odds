@@ -4,9 +4,10 @@ use crate::discovery::bfs::bfs_discover;
 use crate::discovery::cache::FsCache;
 use crate::paths;
 
-mod cache;
 mod bfs;
-mod matcher;
+mod cache;
+
+pub mod matcher;
 
 #[derive(Debug)]
 pub struct DiscoveryCandidate {

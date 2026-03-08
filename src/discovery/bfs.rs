@@ -3,10 +3,11 @@ use std::{
     path::PathBuf,
 };
 
+use crate::discovery::matcher::match_candidate;
+
 use super::DiscoveryCandidate;
 use super::Matchkind;
 use super::cache;
-use super::matcher::{fuzzy_match, strong_match};
 
 /// Does a BFS to discover novel paths i.e. not previously visited, scored by match kind and fuzzy.
 pub fn bfs_discover(
@@ -28,8 +29,6 @@ pub fn bfs_discover(
         }
     }
 
-    let token_l = token.to_lowercase();
-
     while let Some((dir, depth)) = queue.pop_front() {
         if depth > max_depth {
             continue;
@@ -44,24 +43,17 @@ pub fn bfs_discover(
             let Some(name) = path.file_name().and_then(|n| n.to_str()) else {
                 continue;
             };
+
             let name_l = name.to_lowercase();
+            let token_l = token.to_lowercase();
 
-            // Phase 1: Strong matches
-            if let Some((match_kind, score)) = strong_match(&name_l, &token_l) {
-                strong_results.push(DiscoveryCandidate {
-                    path: path.clone(),
-                    match_kind,
-                    score,
-                });
-
-            // Phase 2: Fuzzy fallback
-            } else if strong_results.len() < max_results {
-                if let Some(score) = fuzzy_match(&name_l, &token_l) {
-                    fuzzy_results.push(DiscoveryCandidate {
-                        path: path.clone(),
-                        match_kind: Matchkind::Fuzzy,
-                        score: score.min(45.0),
-                    });
+            if let Some(candidate) = match_candidate(&path, &name_l, &token_l) {
+                // 1. If it's a Strong match (Exact, Prefix, Substring), always keep it.
+                if candidate.match_kind != Matchkind::Fuzzy {
+                    strong_results.push(candidate);
+                // 2. If it's Fuzzy, only keep it if there's still room.
+                } else if strong_results.len() < max_results {
+                    fuzzy_results.push(candidate);
                 }
             }
 
@@ -70,6 +62,8 @@ pub fn bfs_discover(
     }
 
     strong_results.extend(fuzzy_results);
+
+    strong_results.truncate(max_results);
 
     strong_results
 }

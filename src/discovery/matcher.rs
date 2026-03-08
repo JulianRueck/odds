@@ -1,7 +1,30 @@
+use std::path::PathBuf;
+
+use crate::discovery::DiscoveryCandidate;
+
 use super::Matchkind;
 
-/// Matches using equality, prefix or substring. In that order.
-pub fn strong_match(name: &str, token: &str) -> Option<(Matchkind, f32)> {
+/// TODO: docs.
+pub fn match_candidate(path: &PathBuf, name: &str, token: &str) -> Option<DiscoveryCandidate> {
+    // Phase 1: Strong matches.
+    if let Some((match_kind, score)) = strong_match(name, token) {
+        return Some(DiscoveryCandidate {
+            path: path.clone(),
+            match_kind,
+            score,
+        });
+    }
+
+    // Phase 2: Fuzzy fallback.
+    fuzzy_match(name, token).map(|score| DiscoveryCandidate {
+        path: path.clone(),
+        match_kind: Matchkind::Fuzzy,
+        score: score.min(45.0),
+    })
+}
+
+// Matches using equality, prefix or substring. In that order.
+fn strong_match(name: &str, token: &str) -> Option<(Matchkind, f32)> {
     if name == token {
         Some((Matchkind::Exact, 100.0))
     } else if name.starts_with(&token) {
@@ -13,8 +36,8 @@ pub fn strong_match(name: &str, token: &str) -> Option<(Matchkind, f32)> {
     }
 }
 
-/// Sequential character fuzzy match with position based scoring.
-pub fn fuzzy_match(name: &str, token: &str) -> Option<f32> {
+// Sequential character fuzzy match with position based scoring.
+fn fuzzy_match(name: &str, token: &str) -> Option<f32> {
     let mut score = 0.0;
     let mut last_match = None;
     let mut chars = token.chars();
