@@ -12,7 +12,7 @@ pub struct SessionEntry {
 }
 
 #[derive(Debug, Serialize, Deserialize, Default)]
-pub struct SessionStack {
+pub struct Session {
     max_size: usize,
     entries: Vec<SessionEntry>,
     saved_at: u64,
@@ -21,8 +21,8 @@ pub struct SessionStack {
 const SESSION_EXPIRY_SECS: u64 = 86400; // 1 day
 const MAX_SIZE: usize = 10;
 
-impl SessionStack {
-    /// Push a directory onto the stack.
+impl Session {
+    /// Push a directory onto the session stack.
     pub fn push<P: AsRef<Path>>(&mut self, path: P) {
         let path = paths::normalize(path);
 
@@ -57,7 +57,7 @@ impl SessionStack {
         self.entries.iter().any(|e| e.path == *path)
     }
 
-    /// Human-readable stack (for `cdd stack`).
+    /// Human-readable session (for `cdd session`).
     pub fn formatted(&self) -> Vec<String> {
         self.entries
             .iter()
@@ -72,7 +72,7 @@ impl SessionStack {
             .collect()
     }
 
-    /// Load the existing session stack or create and return a new one if the old one is expired or it doesn't exist yet.
+    /// Load the existing session or create and return a new one if the old one is expired or it doesn't exist yet.
     pub fn load_or_new() -> Self {
         if let Ok(session) = Self::load() {
             // Expire sessions older than SESSION_EXPIRY_SECS; saturating_sub guards against clock skew.
@@ -100,6 +100,6 @@ fn time_now() -> u64 {
         .as_secs()
 }
 
-impl Persistable for SessionStack {
+impl Persistable for Session {
     const FILE: &'static str = "session.json";
 }

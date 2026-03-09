@@ -3,14 +3,14 @@ use std::path::PathBuf;
 use crate::{
     discovery::{DiscoveryCandidate, Matchkind},
     persistence::History,
-    persistence::SessionStack,
+    persistence::Session,
     ranking::{MlWeights, rank_candidates},
 };
 
 #[test]
 fn rank_candidates_orders_by_match_kind_weight() {
     let history = History::default();
-    let session = SessionStack::default();
+    let session = Session::default();
     let weights = MlWeights::default();
 
     let exact = DiscoveryCandidate {

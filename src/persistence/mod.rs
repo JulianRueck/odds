@@ -3,4 +3,4 @@ pub mod session;
 pub mod persistable;
 
 pub use history::History;
-pub use session::SessionStack;
+pub use session::Session;

@@ -3,7 +3,7 @@ use std::ops::Deref;
 use crate::{
     discovery::{DiscoveryCandidate, Matchkind},
     persistence::History,
-    persistence::SessionStack,
+    persistence::Session,
 };
 
 /// Determines how much to 'trust' certain signals.
@@ -17,7 +17,7 @@ pub struct MlWeights {
     pub substring: f32,
     pub fuzzy: f32,
     pub frecency: f32,
-    pub session_stack: f32,
+    pub session: f32,
 }
 
 impl Default for MlWeights {
@@ -28,7 +28,7 @@ impl Default for MlWeights {
             substring: 50.0,
             fuzzy: 20.0,
             frecency: 10.0,
-            session_stack: 5.0,
+            session: 12.0,
         }
     }
 }
@@ -74,14 +74,14 @@ impl Deref for RankedCandidate {
 pub fn rank_candidates(
     candidates: Vec<DiscoveryCandidate>,
     history: &History,
-    session_stack: &SessionStack,
+    session: &Session,
     weights: &MlWeights,
     max_results: usize,
 ) -> Vec<RankedCandidate> {
     let mut ranked: Vec<RankedCandidate> = candidates
         .into_iter()
         .map(|c| {
-            let ml_score = score_candidate(&c, history, session_stack, weights);
+            let ml_score = score_candidate(&c, history, session, weights);
             RankedCandidate {
                 candidate: c,
                 ml_score,
@@ -104,7 +104,7 @@ pub fn rank_candidates(
 fn score_candidate(
     candidate: &DiscoveryCandidate,
     history: &History,
-    session_stack: &SessionStack,
+    session: &Session,
     weights: &MlWeights,
 ) -> f32 {
     let mut score = match candidate.match_kind {
@@ -125,15 +125,13 @@ fn score_candidate(
         // Frecency = Frequency * e^(-λ * t)
         let decay_factor = (-lambda * seconds_ago as f32).exp();
         let frecency_score = frequency * decay_factor;
-        println!("Frecency score ({:#?}): {}", &candidate.path, frecency_score);
-        score += frecency_score * weights.frecency;
-        println!("score: {}", score)
 
+        score += frecency_score * weights.frecency;
     }
 
     // Session boost.
-    if session_stack.contains(&candidate.path) {
-        score += weights.session_stack;
+    if session.contains(&candidate.path) {
+        score += weights.session;
     }
 
     score

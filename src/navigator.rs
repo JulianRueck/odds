@@ -1,13 +1,13 @@
-use crate::{persistence::{History, SessionStack, persistable::Persistable}, picker, ranking::RankedCandidate};
+use crate::{persistence::{History, Session, persistable::Persistable}, picker, ranking::RankedCandidate};
 use std::path::Path;
 
 /// Changes current directory and records it in short and longterm memory.
-pub fn do_jump(dir: &Path, history: &mut History, session_stack: &mut SessionStack) {
+pub fn do_jump(dir: &Path, history: &mut History, session: &mut Session) {
     println!("{}", dir.display());
 
-    session_stack.push(&dir);
+    session.push(&dir);
     // TODO: maybe handle potential errors
-    let _ = session_stack.save();
+    let _ = session.save();
 
     history.record_visit(&dir.to_path_buf());
     // TODO: maybe handle potential errors
@@ -19,15 +19,15 @@ pub fn do_jump(dir: &Path, history: &mut History, session_stack: &mut SessionSta
 pub fn pick_and_jump(
     candidates: &[RankedCandidate],
     history: &mut History,
-    session_stack: &mut SessionStack,
+    session: &mut Session,
 ) {
     // No need for picker if there's only one result.
     if candidates.len() == 1 {
         if let Some(candidate) = candidates.first() {
-            do_jump(&candidate.path, history, session_stack);
+            do_jump(&candidate.path, history, session);
         };
     } else if let Some(picked) = picker::pick_directory(candidates) {
-        do_jump(&picked.path, history, session_stack);
+        do_jump(&picked.path, history, session);
     } else {
         println!("No directory selected.");
     }
