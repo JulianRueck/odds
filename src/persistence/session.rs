@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::{
-    path::{Path, PathBuf},
+    collections::HashMap,
+    path::PathBuf,
     time::{SystemTime, UNIX_EPOCH},
 };
 
@@ -16,6 +17,7 @@ pub struct Session {
     max_size: usize,
     entries: Vec<SessionEntry>,
     saved_at: u64,
+    chain: HashMap<String, HashMap<String, usize>>,
 }
 
 const SESSION_EXPIRY_SECS: u64 = 86400; // 1 day
@@ -23,8 +25,20 @@ const MAX_SIZE: usize = 10;
 
 impl Session {
     /// Push a directory onto the session stack.
-    pub fn push<P: AsRef<Path>>(&mut self, path: P) {
+    pub fn push(&mut self, path: &PathBuf) {
         let path = paths::normalize(path);
+
+        // Markov Chain registering.
+        if let Some(current_path) = self.current() {
+            let from_str = current_path.to_string_lossy().to_string();
+            let to_str = path.to_string_lossy().to_string();
+
+            if from_str != to_str {
+                let dest_map = self.chain.entry(from_str).or_default();
+                let count = dest_map.entry(to_str).or_insert(0);
+                *count += 1;
+            }
+        }
 
         // If already current do nothing
         if self.entries.first().map(|e| &e.path) == Some(&path) {
@@ -85,6 +99,7 @@ impl Session {
             max_size: MAX_SIZE,
             entries: Vec::new(),
             saved_at: time_now(),
+            chain: HashMap::new(),
         };
         // TODO: maybe handle potential errors
         let _ = Self::save(&new_session);
