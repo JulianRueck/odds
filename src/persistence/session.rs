@@ -23,7 +23,7 @@ pub struct Session {
 const SESSION_EXPIRY_SECS: u64 = 86400; // 1 day
 const MAX_SIZE: usize = 10;
 
-impl Session {
+impl Session { // TODO: Maybe separate the basic stack logic from the Markov Chain.
     /// Push a directory onto the session stack.
     pub fn push(&mut self, path: &PathBuf) {
         let path = paths::normalize(path);
@@ -105,6 +105,20 @@ impl Session {
         let _ = Self::save(&new_session);
 
         new_session
+    }
+
+    /// Calculate the probability of visiting the target from the source.
+    pub fn calculate_probability_from(&self, from: &str, to: &str) -> f32 {
+        if let Some(dest_map) = self.chain.get(from) {
+            let count = *dest_map.get(to).unwrap_or(&0) as f32;
+            let total: usize = dest_map.values().sum();
+
+            if total > 0 {
+                return count / total as f32;
+            }
+        }
+
+        0.0
     }
 }
 
