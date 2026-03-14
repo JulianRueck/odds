@@ -23,19 +23,21 @@ pub struct Session {
 const SESSION_EXPIRY_SECS: u64 = 86400; // 1 day
 const MAX_SIZE: usize = 10;
 
-impl Session { // TODO: Maybe separate the basic stack logic from the Markov Chain.
+impl Session {
+    // TODO: Maybe separate the basic stack logic from the Markov Chain.
     /// Push a directory onto the session stack.
     pub fn push(&mut self, path: &PathBuf) {
         let path = paths::normalize(path);
 
         // Markov Chain registering.
         if let Some(current_path) = self.current() {
-            let from_str = current_path.to_string_lossy().to_string();
-            let to_str = path.to_string_lossy().to_string();
+            let to_str = path.to_str().expect("Invalid UTF-8 in path.");
+            let from_str = current_path.to_str().expect("Invalid UTF-8 in current path.");
+           
+            if to_str != from_str {
+                let dest_map = self.chain.entry(from_str.to_string()).or_default();
+                let count = dest_map.entry(to_str.to_string()).or_insert(0);
 
-            if from_str != to_str {
-                let dest_map = self.chain.entry(from_str).or_default();
-                let count = dest_map.entry(to_str).or_insert(0);
                 *count += 1;
             }
         }
@@ -108,7 +110,7 @@ impl Session { // TODO: Maybe separate the basic stack logic from the Markov Cha
     }
 
     /// Calculate the probability of visiting the target from the source.
-    pub fn calculate_probability_from(&self, from: &str, to: &str) -> f32 {
+    pub fn calculate_probability_from(&self, to: &str, from: &str) -> f32 {
         if let Some(dest_map) = self.chain.get(from) {
             let count = *dest_map.get(to).unwrap_or(&0) as f32;
             let total: usize = dest_map.values().sum();
@@ -117,7 +119,6 @@ impl Session { // TODO: Maybe separate the basic stack logic from the Markov Cha
                 return count / total as f32;
             }
         }
-
         0.0
     }
 }

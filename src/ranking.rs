@@ -1,4 +1,4 @@
-use std::ops::Deref;
+use std::{ops::Deref, path::PathBuf};
 
 use crate::{
     discovery::{DiscoveryCandidate, Matchkind},
@@ -17,6 +17,7 @@ pub struct MlWeights {
     pub substring: f32,
     pub fuzzy: f32,
     pub frecency: f32,
+    pub markov: f32,
     pub session: f32,
 }
 
@@ -28,6 +29,7 @@ impl Default for MlWeights {
             substring: 50.0,
             fuzzy: 20.0,
             frecency: 10.0,
+            markov: 40.0,
             session: 12.0,
         }
     }
@@ -78,10 +80,12 @@ pub fn rank_candidates(
     weights: &MlWeights,
     max_results: usize,
 ) -> Vec<RankedCandidate> {
+    let current_path = session.current();
+
     let mut ranked: Vec<RankedCandidate> = candidates
         .into_iter()
         .map(|c| {
-            let ml_score = score_candidate(&c, history, session, weights);
+            let ml_score = score_candidate(&c, history, session, weights, current_path);
             RankedCandidate {
                 candidate: c,
                 ml_score,
@@ -95,7 +99,7 @@ pub fn rank_candidates(
             .total_cmp(&a.ml_score)
             .then_with(|| a.candidate.path.cmp(&b.candidate.path))
     });
-    
+
     ranked.truncate(max_results);
 
     ranked
@@ -106,6 +110,7 @@ fn score_candidate(
     history: &History,
     session: &Session,
     weights: &MlWeights,
+    current_path: Option<&PathBuf>,
 ) -> f32 {
     let mut score = match candidate.match_kind {
         Matchkind::Exact => weights.exact,
@@ -114,7 +119,7 @@ fn score_candidate(
         Matchkind::Fuzzy => weights.fuzzy,
     };
 
-    // Calculate Exponential Decay (Frecency).
+    // Exponential Decay (Frecency).
     // λ (lambda) determines how fast scores drop.
     // 0.000002 makes for a 3-day half-life.
     let lambda = 0.000002;
@@ -127,6 +132,18 @@ fn score_candidate(
         let frecency_score = frequency * decay_factor;
 
         score += frecency_score * weights.frecency;
+    }
+
+    // Markov Chain boost.
+    if let Some(from) = current_path {
+        if candidate.path != *from {
+            let to_str = candidate.path.to_str().expect("Invalid UTF-8 in path.");
+            let from_str = from.to_str().expect("Invalid UTF-8 in current path.");
+
+            let prob = session.calculate_probability_from(to_str, from_str);
+
+            score += prob * weights.markov;
+        }
     }
 
     // Session boost.

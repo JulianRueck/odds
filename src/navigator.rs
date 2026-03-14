@@ -1,5 +1,5 @@
 use crate::{persistence::{History, Session, persistable::Persistable}, picker, ranking::RankedCandidate};
-use std::path::{Path, PathBuf};
+use std::path::{PathBuf};
 
 /// Changes current directory and records it in short and longterm memory.
 pub fn do_jump(dir: &PathBuf, history: &mut History, session: &mut Session) {
