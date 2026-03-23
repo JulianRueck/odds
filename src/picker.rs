@@ -12,16 +12,16 @@ pub fn pick_directory(candidates: &[RankedCandidate]) -> Option<&RankedCandidate
         return None;
     }
 
-    println!(
+    eprintln!(
         "Select a directory (1-{}), or 0 to cancel:",
         candidates.len()
     );
 
     for (i, candidate) in candidates.iter().enumerate() {
-        println!("{}) {}", i + 1, candidate.path.display());
+        eprintln!("{}) {}", i + 1, candidate.path.display());
     }
 
-    print!("Enter number: ");
+    eprint!("Enter number: ");
     io::stdout().flush().ok()?;
 
     let mut input = String::new();
