@@ -14,7 +14,7 @@ cdd() {
 "#;
 
 #[derive(Parser)]
-#[command(name = "myapp")]
+#[command(name = "cdd")]
 pub struct Cli {
     #[arg(long)]
     pub init: Option<String>,

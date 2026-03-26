@@ -55,6 +55,18 @@ impl History {
             .collect()
     }
 
+    pub fn load_or_new() -> Self {
+        if let Ok(history) = Self::load() {
+            return history;
+        }
+
+        let new_history = Self::default();
+        // TODO: maybe handle potential errors
+        let _ = Self::save(&new_history);
+
+        new_history
+    }
+
     pub fn visit_count(&self, path: &PathBuf) -> u64 {
         self.entries
             .iter()
