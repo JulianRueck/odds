@@ -35,25 +35,11 @@ impl Default for Session {
 }
 
 impl Session {
-    // TODO: Maybe separate the basic stack logic from the Markov Chain.
     /// Push a directory onto the session stack.
     pub fn push(&mut self, path: &PathBuf) {
         let path = paths::normalize(path);
 
-        // Markov Chain registering.
-        if let Some(current_path) = self.current() {
-            let to_str = path.to_str().expect("Invalid UTF-8 in path.");
-            let from_str = current_path
-                .to_str()
-                .expect("Invalid UTF-8 in current path.");
-
-            if to_str != from_str {
-                let dest_map = self.chain.entry(from_str.to_string()).or_default();
-                let count = dest_map.entry(to_str.to_string()).or_insert(0);
-
-                *count += 1;
-            }
-        }
+        self.register_markov_chain(&path);
 
         // If already current do nothing
         if self.entries.first().map(|e| &e.path) == Some(&path) {
@@ -111,8 +97,10 @@ impl Session {
         }
 
         let new_session = Self::default();
-        // TODO: maybe handle potential errors
-        let _ = Self::save(&new_session);
+        
+        if let Err(e) = Self::save(&new_session) {
+            eprintln!("Error saving session: {:?}", e);
+        }
 
         new_session
     }
@@ -129,6 +117,23 @@ impl Session {
         }
         0.0
     }
+
+
+    fn register_markov_chain(&mut self, path: &PathBuf) {
+            if let Some(current_path) = self.current() {
+            let to_str = path.to_str().expect("Invalid UTF-8 in path.");
+            let from_str = current_path
+                .to_str()
+                .expect("Invalid UTF-8 in current path.");
+
+            if to_str != from_str {
+                let dest_map = self.chain.entry(from_str.to_string()).or_default();
+                let count = dest_map.entry(to_str.to_string()).or_insert(0);
+
+                *count += 1;
+            }
+        }
+}
 }
 
 fn time_now() -> u64 {
