@@ -109,11 +109,4 @@ cddeluxe stores its history and session data in `~/.local/share/cdd/`.
 ## How does this compare to [zoxide](https://github.com/ajeetdsouza/zoxide)?
 
 Zoxide is a mature, battle-tested tool that learns from your navigation history and gets you back to places you've been before — it's excellent at what it does.
-Cddeluxe is exploring a slightly different idea: getting you to directories you *haven't necessarily visited before*, by searching the live filesystem and ranking results using history, session context, and navigation patterns. 
-Whether that's actually useful in practice remains to be seen — cddeluxe is still in its infancy and the ranking model has a lot of maturing to do.
-There is also real potential to improve ranking further with better ML techniques:
-- **Richer transition models** — learning longer navigation sequences, not just single hops
-- **Time-aware patterns** — boosting directories based on time of day or day of week
-- **Learning from the picker** — when a user skips the top result and picks option 3, that's a signal worth capturing
-
-But that's more roadmap than reality right now. If you need something reliable today, zoxide is the right choice. If the idea sounds interesting and you don't mind rough edges, contributions and feedback are very welcome.
+Cddeluxe is exploring a slightly different idea: getting you to directories you *haven't necessarily visited before*, by searching the live filesystem and ranking results using history, session context, and navigation patterns. A key ambition is that the tool learns continuously from your behaviour and gets smarter the more you use it — something that better ML algorithms could take much further over time. Whether that's actually useful in practice remains to be seen — cddeluxe is still in its infancy and the ranking model has a lot of maturing to do. If you need something reliable today, zoxide is the right choice. If the idea sounds interesting and you don't mind rough edges, contributions and feedback are very welcome.
