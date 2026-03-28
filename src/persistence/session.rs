@@ -97,7 +97,7 @@ impl Session {
         }
 
         let mut new_session = Self::default();
-        
+
         if let Err(e) = new_session.save() {
             eprintln!("Error saving session: {e}");
         }
@@ -118,9 +118,8 @@ impl Session {
         0.0
     }
 
-
     fn register_markov_chain(&mut self, path: &PathBuf) {
-            if let Some(current_path) = self.current() {
+        if let Some(current_path) = self.current() {
             let to_str = path.to_str().expect("Invalid UTF-8 in path.");
             let from_str = current_path
                 .to_str()
@@ -133,7 +132,7 @@ impl Session {
                 *count += 1;
             }
         }
-}
+    }
 }
 
 fn time_now() -> u64 {

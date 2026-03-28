@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::{
-    path::{PathBuf},
+    path::PathBuf,
     time::{SystemTime, UNIX_EPOCH},
 };
 
@@ -61,7 +61,7 @@ impl History {
         }
 
         let mut new_history = Self::default();
-        
+
         if let Err(e) = new_history.save() {
             eprintln!("Error saving history: {e}")
         }

@@ -8,7 +8,7 @@ use super::Matchkind;
 /// - Exact
 /// - Prefix
 /// - Substring
-/// 
+///
 /// When none of these match a potential fuzzy match is computated.
 pub fn match_candidate(path: &PathBuf, name: &str, token: &str) -> Option<DiscoveryCandidate> {
     // Phase 1: Strong matches.

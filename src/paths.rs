@@ -46,7 +46,7 @@ pub fn normalize<P: AsRef<Path>>(path: P) -> PathBuf {
 }
 
 /// Prefixes file name with the machines home plus storage path e.g.
-/// ~/.local/share/cdd/<file> 
+/// ~/.local/share/cdd/<file>
 pub fn persistence_path(file: &str) -> PathBuf {
     let home = std::env::var("HOME").unwrap_or_else(|_| ".".into());
     PathBuf::from(home).join(format!("{}{}", STORAGE_PATH, file))

@@ -15,7 +15,7 @@ fn main() {
         return;
     } else if let Some(token) = &cli.token {
         let mut session = Session::load_or_new();
-        let mut history = History::load_or_new(); 
+        let mut history = History::load_or_new();
 
         let max_results = 9;
         let max_depth = 5;
@@ -37,7 +37,8 @@ fn main() {
         );
 
         // If confident auto jump.
-        if let Some(choice) = picker::confident_pick(&ranked_candidates, ConfidenceRules::default()) {
+        if let Some(choice) = picker::confident_pick(&ranked_candidates, ConfidenceRules::default())
+        {
             navigator::do_jump(&choice.candidate.path, &mut history, &mut session);
             return;
         }
