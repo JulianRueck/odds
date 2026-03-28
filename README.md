@@ -43,7 +43,7 @@ cdd ./some/explicit/path
 ### Build from source
 
 ```bash
-git clone https://github.com/your-username/cddeluxe.git
+git clone https://github.com/JulianRueck/cddeluxe.git
 cd cddeluxe
 cargo build --release
 ```
