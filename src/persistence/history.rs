@@ -61,8 +61,10 @@ impl History {
         }
 
         let new_history = Self::default();
-        // TODO: maybe handle potential errors
-        let _ = Self::save(&new_history);
+        
+        if let Err(e) = Self::save(&new_history) {
+            eprintln!("Error saving history: {e}")
+        }
 
         new_history
     }

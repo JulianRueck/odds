@@ -99,7 +99,7 @@ impl Session {
         let new_session = Self::default();
         
         if let Err(e) = Self::save(&new_session) {
-            eprintln!("Error saving session: {:?}", e);
+            eprintln!("Error saving session: {e}");
         }
 
         new_session

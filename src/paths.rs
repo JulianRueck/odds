@@ -5,7 +5,6 @@ use std::{
 
 const STORAGE_PATH: &str = ".local/share/cdd/";
 
-/// TODO: add docs
 pub fn detect_explicit_path(input: &str) -> Option<PathBuf> {
     let path = Path::new(input);
     if path.exists() && path.is_dir() {
@@ -14,7 +13,9 @@ pub fn detect_explicit_path(input: &str) -> Option<PathBuf> {
         None
     }
 }
-/// TODO: Add docs
+/// Returns the roots from which the program is going to search for candidates;
+/// which are: the current working directory, home
+/// and potentialy a git repository i.e. a folder contaning a .git file.
 pub fn search_roots() -> Vec<PathBuf> {
     let mut roots = Vec::new();
 
@@ -37,14 +38,15 @@ pub fn search_roots() -> Vec<PathBuf> {
 
     roots
 }
-///TODO: Add docs
+
 pub fn normalize<P: AsRef<Path>>(path: P) -> PathBuf {
     let p = path.as_ref();
 
     canonicalize(p).unwrap_or_else(|_| p.to_path_buf())
 }
 
-/// TODO: Add docs
+/// Prefixes file name with the machines home plus storage path e.g.
+/// ~/.local/share/cdd/<file> 
 pub fn persistence_path(file: &str) -> PathBuf {
     let home = std::env::var("HOME").unwrap_or_else(|_| ".".into());
     PathBuf::from(home).join(format!("{}{}", STORAGE_PATH, file))

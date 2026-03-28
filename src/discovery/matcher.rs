@@ -4,7 +4,12 @@ use crate::discovery::DiscoveryCandidate;
 
 use super::Matchkind;
 
-/// TODO: docs.
+/// Tries to match a candidate to the token. First through strong matching e.g.
+/// - Exact
+/// - Prefix
+/// - Substring
+/// 
+/// When none of these match a potential fuzzy match is computated.
 pub fn match_candidate(path: &PathBuf, name: &str, token: &str) -> Option<DiscoveryCandidate> {
     // Phase 1: Strong matches.
     if let Some((match_kind, score)) = strong_match(name, token) {

@@ -6,12 +6,16 @@ pub fn do_jump(dir: &PathBuf, history: &mut History, session: &mut Session) {
     println!("{}", dir.display());
 
     session.push(&dir);
-    // TODO: maybe handle potential errors
-    let _ = session.save();
+
+    if let Err(e) = session.save() {
+        eprintln!("Error saving session while jumping: {e}")
+    }
 
     history.record_visit(&dir.to_path_buf());
-    // TODO: maybe handle potential errors
-    let _ = history.save();
+    
+    if let Err(e) = history.save() {
+        eprintln!("Error saving history while jumping: {e}")
+    }
 }
 
 /// Displays picker and changes current directory to user picked directory.
