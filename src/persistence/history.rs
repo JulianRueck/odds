@@ -60,9 +60,9 @@ impl History {
             return history;
         }
 
-        let new_history = Self::default();
+        let mut new_history = Self::default();
         
-        if let Err(e) = Self::save(&new_history) {
+        if let Err(e) = new_history.save() {
             eprintln!("Error saving history: {e}")
         }
 

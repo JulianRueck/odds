@@ -20,7 +20,7 @@ pub struct Session {
     chain: HashMap<String, HashMap<String, usize>>,
 }
 
-const SESSION_EXPIRY_SECS: u64 = 86400; // 1 day
+const SESSION_EXPIRY_SECS: u64 = 43200; // 12 hours
 const MAX_SIZE: usize = 10;
 
 impl Default for Session {
@@ -96,9 +96,9 @@ impl Session {
             }
         }
 
-        let new_session = Self::default();
+        let mut new_session = Self::default();
         
-        if let Err(e) = Self::save(&new_session) {
+        if let Err(e) = new_session.save() {
             eprintln!("Error saving session: {e}");
         }
 
@@ -145,4 +145,8 @@ fn time_now() -> u64 {
 
 impl Persistable for Session {
     const FILE: &'static str = "session.json";
+
+    fn before_save(&mut self) {
+        self.saved_at = time_now();
+    }
 }

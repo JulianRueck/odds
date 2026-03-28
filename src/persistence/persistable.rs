@@ -7,7 +7,12 @@ use crate::paths;
 pub trait Persistable: Serialize + DeserializeOwned + Sized {
     const FILE: &'static str;
 
-    fn save(&self) -> anyhow::Result<()> {
+    fn before_save(&mut self) {}
+
+    fn save(&mut self) -> anyhow::Result<()> {
+        // A hook for session so it can update its timestamp
+        self.before_save();
+
         let path = paths::persistence_path(Self::FILE);
 
         if let Some(parent) = path.parent() {
