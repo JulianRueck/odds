@@ -100,7 +100,6 @@ Enter number: 2
 # → /home/user/projects/legacy/api
 ```
 
-Enter `0` to cancel without navigating.
 
 ## Data storage
 
