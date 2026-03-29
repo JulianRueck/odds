@@ -1,4 +1,4 @@
-use cdd::{
+use odds::{
     args::Cli,
     discovery::{self},
     navigator, paths,

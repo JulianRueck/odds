@@ -1,20 +1,21 @@
 use clap::Parser;
 
 pub const BASH_ZSH_SCRIPT: &str = r#"
-cdd() {
+o() {
     if [ "$#" -eq 0 ]; then
         cd ~
     elif [ "$#" -eq 1 ] && [ "$1" = "-" ]; then
         cd -
     else
         local result
-        result=$(command cdd "$@") && [ -n "$result" ] && cd "$result"
+        result=$(command odds "$@") && [ -n "$result" ] && cd "$result"
     fi
 }
+odds() { o "$@" }
 "#;
 
 #[derive(Parser)]
-#[command(name = "cdd")]
+#[command(name = "o")]
 pub struct Cli {
     #[arg(long)]
     pub init: Option<String>,

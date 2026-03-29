@@ -72,7 +72,7 @@ impl Session {
         self.entries.iter().any(|e| e.path == *path)
     }
 
-    /// Human-readable session (for `cdd session`).
+    /// Human-readable session (for `o session`).
     pub fn formatted(&self) -> Vec<String> {
         self.entries
             .iter()

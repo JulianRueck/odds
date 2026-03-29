@@ -1,19 +1,19 @@
-# cddeluxe 🚀
+# odds 🚀
 
 A smarter `cd`. You know where you want to go. Now your shell does too.
 
 ## What is it?
 
-`cddeluxe` learns from your navigation history and gets you where you're going with minimal typing. Type a keyword and it jumps straight to the most likely match. Not confident enough to auto-jump? It shows you a numbered list to pick from.
+`odds` learns from your navigation history and gets you where you're going with minimal typing. Type a keyword and it jumps straight to the most likely match. Not confident enough to auto-jump? It shows you a numbered list to pick from.
 
 ```bash
-cdd config
+o config
 # → /home/user/projects/myapp/config
 ```
 
 ## How it works
 
-When you run `cdd <keyword>`, cddeluxe:
+When you run `o <keyword>`, odds:
 
 1. **Searches your history** for directories whose name matches the keyword (exact, prefix, substring, or fuzzy match).
 2. **Scores each candidate** using a combination of signals:
@@ -24,15 +24,15 @@ When you run `cdd <keyword>`, cddeluxe:
 3. **If confident**, jumps immediately. If not, falls back to a filesystem search rooted at your current directory, git repository root, and home directory (up to 5 levels deep).
 4. **If still ambiguous**, presents up to 9 options for you to pick from.
 
-You can also pass an explicit path and `cdd` will jump directly:
+You can also pass an explicit path and `o` will jump directly:
 
 ```bash
-cdd ./some/explicit/path
+o ./some/explicit/path
 ```
 
 ## Installation
 
-`cddeluxe` is not yet available in a package repository and must be installed manually.
+`odds` is not yet available in a package repository and must be installed manually.
 
 ### Prerequisites
 
@@ -43,15 +43,15 @@ cdd ./some/explicit/path
 ### Build from source
 
 ```bash
-git clone https://github.com/JulianRueck/cddeluxe.git
-cd cddeluxe
+git clone https://github.com/JulianRueck/odds.git
+cd odds
 cargo build --release
 ```
 
 Then move the binary somewhere on your `$PATH`:
 
 ```bash
-cp target/release/cdd ~/.local/bin/
+cp target/release/odds ~/.local/bin/
 ```
 
 ### Shell integration
@@ -59,8 +59,8 @@ cp target/release/cdd ~/.local/bin/
 Add the following to your `.bashrc` or `.zshrc`:
 
 ```bash
-eval "$(cdd --init bash)"   # for bash
-eval "$(cdd --init zsh)"    # for zsh
+eval "$(odds --init bash)"   # for bash
+eval "$(odds --init zsh)"    # for zsh
 ```
 
 Then reload your shell:
@@ -69,28 +69,28 @@ Then reload your shell:
 source ~/.zshrc  # or ~/.bashrc
 ```
 
-> The shell function wraps the `cdd` binary so that directory changes affect your current shell session.
+> The shell function wraps the `o` binary so that directory changes affect your current shell session.
 
 ## Usage
 
 ### Jump to a directory
 
 ```bash
-cdd <keyword>
+o <keyword>
 ```
 
 ```bash
-cdd config    # → /home/user/projects/myapp/config
-cdd tests     # → /home/user/projects/myapp/tests
-cdd work      # → /home/user/work
+o config    # → /home/user/projects/myapp/config
+o tests     # → /home/user/projects/myapp/tests
+o work      # → /home/user/work
 ```
 
 ### Picker mode
 
-When cddeluxe isn't confident about the best match, it shows a numbered list of up to 9 candidates. Type the number and press enter.
+When odds isn't confident about the best match, it shows a numbered list of up to 9 candidates. Type the number and press enter.
 
 ```
-$ cdd api
+$ o api
 
 Select a directory (1-3), or 0 to cancel:
 1) /home/user/projects/myapp/api
@@ -100,10 +100,11 @@ Enter number: 2
 # → /home/user/projects/legacy/api
 ```
 
+Enter `0` to cancel without navigating.
 
 ## Data storage
 
-cddeluxe stores its history and session data in `~/.local/share/cdd/`.
+`odds` stores its history and session data in `~/.local/share/odds/`.
 
 ## How does this compare to [zoxide](https://github.com/ajeetdsouza/zoxide)?
 

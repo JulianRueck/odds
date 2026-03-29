@@ -3,7 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-const STORAGE_PATH: &str = ".local/share/cdd/";
+const STORAGE_PATH: &str = ".local/share/odds/";
 
 pub fn detect_explicit_path(input: &str) -> Option<PathBuf> {
     let path = Path::new(input);
