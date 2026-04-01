@@ -11,6 +11,10 @@ use super::Matchkind;
 ///
 /// When none of these match a potential fuzzy match is computated.
 pub fn match_candidate(path: &PathBuf, name: &str, token: &str) -> Option<DiscoveryCandidate> {
+    if name.is_empty() || token.is_empty() {
+        return None;
+    }
+
     // Phase 1: Strong matches.
     if let Some((match_kind, score)) = strong_match(name, token) {
         return Some(DiscoveryCandidate {

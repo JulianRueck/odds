@@ -20,7 +20,7 @@ impl Default for DiscoveryCandidate {
     fn default() -> Self {
         Self {
             path: PathBuf::new(),
-            match_kind: Matchkind::Exact,
+            match_kind: Matchkind::Exact, 
             score: 0.0,
         }
     }
