@@ -17,8 +17,8 @@ fn main() {
         let mut session = Session::load_or_new();
         let mut history = History::load_or_new();
 
-        let max_results = 9;
-        let max_depth = 5;
+        const MAX_RESULTS: usize = 9;
+        const MAX_DEPTH: usize = 5;
 
         // Do a regular cd if it's an explicit path.
         if let Some(dir) = paths::detect_explicit_path(token) {
@@ -33,7 +33,7 @@ fn main() {
             &history,
             &session,
             &MlWeights::default(),
-            max_results,
+            MAX_RESULTS,
         );
 
         // If confident auto jump.
@@ -44,14 +44,14 @@ fn main() {
         }
 
         // Bounded discovery.
-        let discovery_candidates = discovery::discover(token, max_depth, max_results);
+        let discovery_candidates = discovery::discover(token, MAX_DEPTH, MAX_RESULTS);
 
         let ranked_candidates = ranking::rank_candidates(
             discovery_candidates,
             &history,
             &session,
             &MlWeights::default(),
-            max_results,
+            MAX_RESULTS,
         );
 
         // Picker.

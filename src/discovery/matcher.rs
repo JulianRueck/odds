@@ -4,6 +4,11 @@ use crate::discovery::DiscoveryCandidate;
 
 use super::Matchkind;
 
+const EXACT_SCORE: f32 = 100.0;
+const PREFIX_SCORE: f32 = 70.0;
+const SUBSTRING_SCORE: f32 = 50.0;
+const FUZZY_SCORE_CAP: f32 = 45.0;
+
 /// Tries to match a candidate to the token. First through strong matching e.g.
 /// - Exact
 /// - Prefix
@@ -28,18 +33,18 @@ pub fn match_candidate(path: &PathBuf, name: &str, token: &str) -> Option<Discov
     fuzzy_match(name, token).map(|score| DiscoveryCandidate {
         path: path.clone(),
         match_kind: Matchkind::Fuzzy,
-        score: score.min(45.0),
+        score: score.min(FUZZY_SCORE_CAP),
     })
 }
 
 // Matches using equality, prefix or substring. In that order.
 fn strong_match(name: &str, token: &str) -> Option<(Matchkind, f32)> {
     if name == token {
-        Some((Matchkind::Exact, 100.0))
+        Some((Matchkind::Exact, EXACT_SCORE))
     } else if name.starts_with(&token) {
-        Some((Matchkind::Prefix, 70.0))
+        Some((Matchkind::Prefix, PREFIX_SCORE))
     } else if name.contains(&token) {
-        Some((Matchkind::Substring, 50.0))
+        Some((Matchkind::Substring, SUBSTRING_SCORE))
     } else {
         None
     }
