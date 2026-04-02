@@ -21,16 +21,30 @@ pub struct MlWeights {
     pub session: f32,
 }
 
+impl MlWeights {
+    pub const EXACT: f32 = 100.0;
+    pub const PREFIX: f32 = 70.0;
+    pub const SUBSTRING: f32 = 50.0;
+    pub const FUZZY: f32 = 20.0;
+    pub const FRECENCY: f32 = 10.0;
+    pub const MARKOV: f32 = 40.0;
+    pub const SESSION: f32 = 12.0;
+
+    pub const HALF_LIFE_DAYS: f32 = 3.0;
+    /// ln(2) is approximately 0.69314718
+    pub const LAMBDA: f32 = 0.69314718 / (Self::HALF_LIFE_DAYS * 24.0 * 60.0 * 60.0);
+}
+
 impl Default for MlWeights {
     fn default() -> Self {
         Self {
-            exact: 100.0,
-            prefix: 70.0,
-            substring: 50.0,
-            fuzzy: 20.0,
-            frecency: 10.0,
-            markov: 40.0,
-            session: 12.0,
+            exact: Self::EXACT,
+            prefix: Self::PREFIX,
+            substring: Self::SUBSTRING,
+            fuzzy: Self::FUZZY,
+            frecency: Self::FRECENCY,
+            markov: Self::MARKOV,
+            session: Self::SESSION,
         }
     }
 }
@@ -120,15 +134,11 @@ fn score_candidate(
     };
 
     // Exponential Decay (Frecency).
-    // λ (lambda) determines how fast scores drop.
-    // 0.000002 makes for a 3-day half-life.
-    let lambda = 0.000002;
-
     let frequency = history.visit_count(&candidate.path) as f32;
 
     if let Some(seconds_ago) = history.seconds_since_last_visit(&candidate.path) {
         // Frecency = Frequency * e^(-λ * t)
-        let decay_factor = (-lambda * seconds_ago as f32).exp();
+        let decay_factor = (-MlWeights::LAMBDA * seconds_ago as f32).exp();
         let frecency_score = frequency * decay_factor;
 
         score += frecency_score * weights.frecency;
