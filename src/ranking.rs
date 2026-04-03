@@ -31,7 +31,7 @@ impl MlWeights {
     pub const SESSION: f32 = 12.0;
 
     pub const HALF_LIFE_DAYS: f32 = 3.0;
-    /// ln(2) is approximately 0.69314718
+    // λ = ln(2) / T1/2
     pub const LAMBDA: f32 = 0.69314718 / (Self::HALF_LIFE_DAYS * 24.0 * 60.0 * 60.0);
 }
 
