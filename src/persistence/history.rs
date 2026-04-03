@@ -77,14 +77,19 @@ impl History {
             .unwrap_or(0)
     }
 
+    pub fn seconds_since_last_visit_at(&self, path: &PathBuf, now: u64) -> Option<u64> {
+        self.entries
+            .iter()
+            .find(|e| e.path == *path)
+            .map(|e| now.saturating_sub(e.last_visited))
+    }
+
     pub fn seconds_since_last_visit(&self, path: &PathBuf) -> Option<u64> {
-        self.entries.iter().find(|e| e.path == *path).map(|e| {
-            SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .unwrap()
-                .as_secs()
-                - e.last_visited
-        })
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
+        self.seconds_since_last_visit_at(path, now)
     }
 }
 

@@ -5,7 +5,7 @@ use odds::{
     navigator, paths,
     persistence::{History, Session},
     picker,
-    ranking::{ConfidenceRules, ranker::Ranker},
+    ranking::{ConfidenceRules, ranker},
 };
 
 fn main() {
@@ -28,11 +28,10 @@ fn main() {
 
         let history_candidates = history.history_candidates(token);
 
-        let ranked_candidates = Ranker::rank_candidates(
+        let ranked_candidates = ranker::rank_candidates(
             history_candidates,
             &history,
-            &session,
-            &Ranker::default(),
+            &session, 
             MAX_RESULTS,
         );
 
@@ -46,11 +45,10 @@ fn main() {
         // Bounded discovery.
         let discovery_candidates = discovery::discover(token, MAX_DEPTH, MAX_RESULTS);
 
-        let ranked_candidates = Ranker::rank_candidates(
+        let ranked_candidates = ranker::rank_candidates(
             discovery_candidates,
             &history,
             &session,
-            &Ranker::default(),
             MAX_RESULTS,
         );
 

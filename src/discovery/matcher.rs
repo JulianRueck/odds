@@ -4,10 +4,11 @@ use crate::discovery::DiscoveryCandidate;
 
 use super::Matchkind;
 
-const EXACT_SCORE: f32 = 100.0;
-const PREFIX_SCORE: f32 = 70.0;
-const SUBSTRING_SCORE: f32 = 50.0;
-const FUZZY_SCORE_CAP: f32 = 45.0;
+pub const EXACT_SCORE: f32 = 100.0;
+pub const PREFIX_SCORE: f32 = 70.0;
+pub const SUBSTRING_SCORE: f32 = 50.0;
+pub const FUZZY_SCORE: f32 = 20.0;
+pub const FUZZY_SCORE_CAP: f32 = 45.0;
 
 /// Tries to match a candidate to the token. First through strong matching e.g.
 /// - Exact
