@@ -1,12 +1,12 @@
+use clap::Parser;
 use odds::{
     args::Cli,
     discovery::{self},
     navigator, paths,
     persistence::{History, Session},
     picker,
-    ranking::{self, ConfidenceRules, MlWeights},
+    ranking::{ConfidenceRules, ranker::Ranker},
 };
-use clap::Parser;
 
 fn main() {
     let cli = Cli::parse();
@@ -28,11 +28,11 @@ fn main() {
 
         let history_candidates = history.history_candidates(token);
 
-        let ranked_candidates = ranking::rank_candidates(
+        let ranked_candidates = Ranker::rank_candidates(
             history_candidates,
             &history,
             &session,
-            &MlWeights::default(),
+            &Ranker::default(),
             MAX_RESULTS,
         );
 
@@ -46,11 +46,11 @@ fn main() {
         // Bounded discovery.
         let discovery_candidates = discovery::discover(token, MAX_DEPTH, MAX_RESULTS);
 
-        let ranked_candidates = ranking::rank_candidates(
+        let ranked_candidates = Ranker::rank_candidates(
             discovery_candidates,
             &history,
             &session,
-            &MlWeights::default(),
+            &Ranker::default(),
             MAX_RESULTS,
         );
 
