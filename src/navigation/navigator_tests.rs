@@ -1,6 +1,6 @@
 use crate::{
     discovery::DiscoveryCandidate,
-    picker::{SelectionStrategy, confident_pick, select_index},
+    navigation::picker::{SelectionStrategy, confident_pick, select_index},
     ranking::{ConfidenceRules, RankedCandidate},
 };
 

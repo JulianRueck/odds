@@ -85,3 +85,7 @@ fn fuzzy_match(name: &str, token: &str) -> Option<f32> {
 
     None
 }
+
+#[cfg(test)]
+#[path ="matcher_tests.rs"]
+mod matcher_tests;

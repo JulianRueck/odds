@@ -1,9 +1,11 @@
+use std::path::PathBuf;
+
 use crate::{
     persistence::{History, Session, persistable::Persistable},
-    picker,
     ranking::RankedCandidate,
 };
-use std::path::PathBuf;
+
+use super::picker;
 
 /// Changes current directory and records it in short and longterm memory.
 pub fn do_jump(dir: &PathBuf, history: &mut History, session: &mut Session) {
@@ -36,3 +38,7 @@ pub fn pick_and_jump(candidates: &[RankedCandidate], history: &mut History, sess
         println!("No directory selected.");
     }
 }
+
+#[cfg(test)]
+#[path = "navigator_tests.rs"]
+mod navigator_tests;

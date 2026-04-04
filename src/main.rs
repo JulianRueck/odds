@@ -1,10 +1,11 @@
 use clap::Parser;
+
 use odds::{
     args::Cli,
     discovery::{self},
-    navigator, paths,
+    navigation::{navigator, picker}, 
+    paths,
     persistence::{History, Session},
-    picker,
     ranking::{ConfidenceRules, ranker},
 };
 
