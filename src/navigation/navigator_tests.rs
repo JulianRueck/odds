@@ -1,13 +1,13 @@
 use crate::{
     discovery::DiscoveryCandidate,
-    navigation::picker::{SelectionStrategy, confident_pick, select_index},
-    ranking::{ConfidenceRules, RankedCandidate},
+    navigation::picker::{ConfidenceRules, SelectionStrategy, confident_pick, select_index},
+    ranking::RankedCandidate,
 };
 
 fn rc(score: f32) -> RankedCandidate {
     RankedCandidate {
         candidate: DiscoveryCandidate::default(),
-        ml_score: score,
+        ranked_score: score,
     }
 }
 
@@ -36,6 +36,7 @@ fn confident_success() {
     let rules = ConfidenceRules {
         min_score: 0.8,
         min_gap: 0.3,
+        min_match_score: 0.0,
     };
 
     let index = select_index(&candidates, SelectionStrategy::Confident { rules });
@@ -50,10 +51,11 @@ fn confident_pick_returns_top_candidate() {
     let rules = ConfidenceRules {
         min_score: 0.8,
         min_gap: 0.3,
+        min_match_score: 0.0,
     };
 
     let result = confident_pick(&candidates, rules);
 
     assert!(result.is_some());
-    assert_eq!(result.unwrap().ml_score, 0.9);
+    assert_eq!(result.unwrap().ranked_score, 0.9);
 }

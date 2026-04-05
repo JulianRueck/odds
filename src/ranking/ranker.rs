@@ -28,21 +28,16 @@ pub fn rank_candidates(
     let mut ranked: Vec<RankedCandidate> = candidates
         .into_iter()
         .map(|candidate| {
-            let ml_score = score_candidate(&candidate, history, session, current_path);
+            let ranked_score = score_candidate(&candidate, history, session, current_path);
             RankedCandidate {
                 candidate,
-                ml_score,
+                ranked_score,
             }
         })
         .collect();
 
-    // Sort by score descending and tie-break lexicographically.
-    ranked.sort_by(|a, b| {
-        b.ml_score
-            .total_cmp(&a.ml_score)
-            .then_with(|| a.candidate.path.cmp(&b.candidate.path))
-    });
-
+    // Sort by score descending.
+    ranked.sort_by(|a, b| b.ranked_score.total_cmp(&a.ranked_score));
     ranked.truncate(max_results);
 
     ranked
@@ -87,7 +82,7 @@ fn calculate_frecency_score_at(path: &PathBuf, history: &History, now: u64) -> f
         let decay_factor = (-LAMBDA * seconds_ago as f32).exp();
         return frequency * decay_factor * FRECENCY_WEIGHT;
     }
-    
+
     0.0
 }
 

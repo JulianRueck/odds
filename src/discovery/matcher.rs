@@ -1,54 +1,103 @@
 use std::path::PathBuf;
 
-use crate::discovery::DiscoveryCandidate;
+use pathfinding::{matrix::Matrix, prelude::kuhn_munkres};
 
-use super::Matchkind;
+use crate::discovery::DiscoveryCandidate;
 
 pub const EXACT_SCORE: f32 = 100.0;
 pub const PREFIX_SCORE: f32 = 70.0;
 pub const SUBSTRING_SCORE: f32 = 50.0;
-pub const FUZZY_SCORE: f32 = 20.0;
-pub const FUZZY_SCORE_CAP: f32 = 45.0;
+pub const FUZZY_SCORE_CAP: f32 = 30.0;
 
-/// Tries to match a candidate to the token. First through strong matching e.g.
-/// - Exact
-/// - Prefix
-/// - Substring
+/// Matches a path against multiple tokens using the Hungarian algorithm to find
+/// the optimal assignment of tokens to path segments.
 ///
-/// When none of these match a potential fuzzy match is computated.
-pub fn match_candidate(path: &PathBuf, name: &str, token: &str) -> Option<DiscoveryCandidate> {
+/// Each token is matched against every segment of the path, producing a score
+/// matrix. The Hungarian algorithm then finds the assignment that maximises the
+/// total score, ensuring each segment is claimed by at most one token.
+///
+/// The returned score is the average across all tokens, so partial matches
+/// (where some tokens find no segment) are penalised proportionally rather
+/// than rejected outright. A candidate is only rejected if no token matches
+/// any segment at all.
+///
+/// # Example
+///
+/// Given the path `/home/user/projects/api` and tokens `["proj", "api"]`:
+/// - `"proj"` matches `"projects"` as a prefix (70.0)
+/// - `"api"` matches `"api"` as exact (100.0)
+/// - average score: 85.0
+pub fn match_candidate_multi(path: &PathBuf, tokens: &[&str]) -> Option<DiscoveryCandidate> {
+    if tokens.is_empty() {
+        return None;
+    }
+
+    let segments: Vec<String> = path
+        .components()
+        .filter_map(|c| c.as_os_str().to_str())
+        .map(|s| s.to_lowercase())
+        .collect();
+
+    if segments.is_empty() {
+        return None;
+    }
+
+    let tokens_l: Vec<String> = tokens.iter().map(|t| t.to_lowercase()).collect();
+
+    let cols = segments.len();
+    // Having more rows than collumns would make Hungarian panic.
+    let rows = tokens_l.len().min(cols);
+
+    let matrix = Matrix::from_fn(rows, cols, |(t, s)| {
+        match_candidate(&segments[s], &tokens_l[t])
+            .map(|score| (score * 100.0) as i64)
+            .unwrap_or(0)
+    });
+
+    let (total, _) = kuhn_munkres(&matrix);
+
+    let avg = total as f32 / (tokens_l.len() as f32 * 100.0);
+
+    if avg == 0.0 {
+        return None;
+    }
+
+    Some(DiscoveryCandidate {
+        path: path.clone(),
+        score: avg,
+    })
+}
+
+fn match_candidate(name: &str, token: &str) -> Option<f32> {
     if name.is_empty() || token.is_empty() {
         return None;
     }
 
-    // Phase 1: Strong matches.
-    if let Some((match_kind, score)) = strong_match(name, token) {
-        return Some(DiscoveryCandidate {
-            path: path.clone(),
-            match_kind,
-            score,
-        });
+    if let Some(score) = strong_match(name, token) {
+        return Some(score);
     }
 
-    // Phase 2: Fuzzy fallback.
-    fuzzy_match(name, token).map(|score| DiscoveryCandidate {
-        path: path.clone(),
-        match_kind: Matchkind::Fuzzy,
-        score: score.min(FUZZY_SCORE_CAP),
-    })
+    fuzzy_match(name, token).map(|score| score.min(FUZZY_SCORE_CAP))
 }
 
-// Matches using equality, prefix or substring. In that order.
-fn strong_match(name: &str, token: &str) -> Option<(Matchkind, f32)> {
+fn strong_match(name: &str, token: &str) -> Option<f32> {
     if name == token {
-        Some((Matchkind::Exact, EXACT_SCORE))
-    } else if name.starts_with(&token) {
-        Some((Matchkind::Prefix, PREFIX_SCORE))
-    } else if name.contains(&token) {
-        Some((Matchkind::Substring, SUBSTRING_SCORE))
+        return Some(EXACT_SCORE);
+    }
+
+    let base_score = 
+    if name.starts_with(token) {
+        Some(PREFIX_SCORE)
+    } else if name.contains(token) {
+        Some(SUBSTRING_SCORE)
     } else {
         None
-    }
+    };
+
+    let ratio = token.len() as f32 / name.len() as f32;
+    base_score
+        .map(|score| score * ratio)
+        .filter(|&score| score >= FUZZY_SCORE_CAP)
 }
 
 // Sequential character fuzzy match with position based scoring.
@@ -87,5 +136,5 @@ fn fuzzy_match(name: &str, token: &str) -> Option<f32> {
 }
 
 #[cfg(test)]
-#[path ="matcher_tests.rs"]
+#[path = "matcher_tests.rs"]
 mod matcher_tests;
