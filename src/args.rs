@@ -11,7 +11,6 @@ o() {
         result=$(command odds "$@") && [ -n "$result" ] && cd "$result"
     fi
 }
-odds() { o "$@" }
 "#;
 
 #[derive(Parser)]
