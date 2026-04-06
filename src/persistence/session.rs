@@ -39,10 +39,10 @@ impl Session {
     pub fn push(&mut self, path: &PathBuf) {
         let path = paths::normalize(path);
 
-        self.register_markov_chain(&path);
+        self.register_markov_chain_from_current(&path);
 
         // If already current do nothing
-        if self.entries.first().map(|e| &e.path) == Some(&path) {
+        if self.current() == Some(&path) {
             return;
         }
 
@@ -118,19 +118,26 @@ impl Session {
         0.0
     }
 
-    fn register_markov_chain(&mut self, path: &PathBuf) {
-        if let Some(current_path) = self.current() {
-            let to_str = path.to_str().expect("Invalid UTF-8 in path.");
-            let from_str = current_path
-                .to_str()
-                .expect("Invalid UTF-8 in current path.");
+    /// Register the amount of transitions from one path to another.
+    pub fn register_markov_chain(&mut self, from: &PathBuf, to: &PathBuf) {
+        let from_str = from.to_str().expect("Invalid UTF-8 in current path.");
+        let to_str = to.to_str().expect("Invalid UTF-8 in path.");
 
-            if to_str != from_str {
-                let dest_map = self.chain.entry(from_str.to_string()).or_default();
-                let count = dest_map.entry(to_str.to_string()).or_insert(0);
+        if from_str != to_str {
+            let dest_map = self.chain.entry(from_str.to_string()).or_default();
+            let count = dest_map.entry(to_str.to_string()).or_insert(0);
 
-                *count += 1;
-            }
+            *count += 1;
+        }
+    }
+
+    pub fn transition_count(&self) -> usize {
+        self.chain.values().map(|dest_map| dest_map.len()).sum()
+    }
+
+    fn register_markov_chain_from_current(&mut self, to: &PathBuf) {
+        if let Some(current_path) = self.current().cloned() {
+            self.register_markov_chain(&current_path, to);
         }
     }
 }

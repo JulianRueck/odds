@@ -7,12 +7,19 @@ use odds::{
     paths,
     persistence::{History, Session},
     ranking::ranker,
+    seeder,
 };
 
 fn main() {
     let cli = Cli::parse();
 
     if cli.handle_init() {
+        return;
+    }
+    if cli.seed {
+        if let Err(e) = seeder::seed() {
+            eprintln!("Error seeding odds: {e}");
+        }
         return;
     }
     if cli.tokens.is_empty() {
