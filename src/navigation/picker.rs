@@ -5,17 +5,15 @@ use crate::ranking::RankedCandidate;
 /// Denotes confidence in a candidate in order effectuate auto jump functionality.
 #[derive(Debug)]
 pub struct ConfidenceRules {
+    pub min_ranked_score: f32,
     pub min_score: f32,
-    pub min_gap: f32,
-    pub min_match_score: f32,
 }
 
 impl Default for ConfidenceRules {
     fn default() -> Self {
         Self {
-            min_score: 70.0,
-            min_gap: 20.0,
-            min_match_score: 25.0,
+            min_ranked_score: 70.0,
+            min_score: 35.0,
         }
     }
 }
@@ -30,10 +28,7 @@ pub fn pick_directory(candidates: &[RankedCandidate]) -> Option<&RankedCandidate
         return None;
     }
 
-    eprintln!(
-        "Select a directory (1-{}):",
-        candidates.len()
-    );
+    eprintln!("Select a directory (1-{}):", candidates.len());
 
     for (i, candidate) in candidates.iter().enumerate() {
         eprintln!("{}) {}", i + 1, candidate.path.display());
@@ -51,7 +46,6 @@ pub fn pick_directory(candidates: &[RankedCandidate]) -> Option<&RankedCandidate
     candidates.get(index)
 }
 
-/// Pick candidate based on the highest score and the distance between it and the second best being great enough.
 pub fn confident_pick(
     candidates: &[RankedCandidate],
     rules: ConfidenceRules,
@@ -74,7 +68,7 @@ pub fn select_index(candidates: &[RankedCandidate], strategy: SelectionStrategy)
         SelectionStrategy::Confident { rules } => {
             let first = candidates.first()?;
 
-            if first.score < rules.min_match_score {
+            if first.score < rules.min_score {
                 return None;
             }
 
@@ -83,10 +77,16 @@ pub fn select_index(candidates: &[RankedCandidate], strategy: SelectionStrategy)
                 None => return Some(0),
             };
 
-            if first.ranked_score >= rules.min_score
-                && first.ranked_score - second.ranked_score >= rules.min_gap
-            {
+            let first_valid = first.ranked_score >= rules.min_ranked_score && first.score >= second.score;
+
+            let second_valid = second.score >= first.score
+                && second.ranked_score >= rules.min_ranked_score
+                && second.score > rules.min_score;
+
+            if first_valid {
                 Some(0)
+            } else if second_valid {
+                Some(1)
             } else {
                 None
             }
