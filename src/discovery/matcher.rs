@@ -45,7 +45,8 @@ pub fn match_candidate_multi(path: &PathBuf, tokens: &[&str]) -> Option<Discover
     let tokens_l: Vec<String> = tokens.iter().map(|t| t.to_lowercase()).collect();
 
     let cols = segments.len();
-    // Having more rows than collumns would make Hungarian panic.
+    // Having more rows than columns would make Hungarian panic.
+    // Avarage is still calculated by total length of tokens, making for a penalty.
     let rows = tokens_l.len().min(cols);
 
     let matrix = Matrix::from_fn(rows, cols, |(t, s)| {

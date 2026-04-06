@@ -25,7 +25,7 @@ fn main() {
     let mut history = History::load_or_new();
 
     const MAX_RESULTS: usize = 9;
-    const MAX_DEPTH: usize = 5; // Never use 0
+    const MAX_DEPTH: usize = 5;
 
     // Do a regular cd if it's an explicit path.
     if let Some(dir) = paths::detect_explicit_path(tokens[0]) {
@@ -36,8 +36,6 @@ fn main() {
     let history_candidates = history.history_candidates(&tokens);
 
     let ranked_candidates = ranker::rank_candidates(history_candidates, &history, &session, MAX_RESULTS);
-
-    println!("{:#?}", ranked_candidates);
 
     // If confident auto jump.
     if let Some(choice) = picker::confident_pick(&ranked_candidates, ConfidenceRules::default()) {
