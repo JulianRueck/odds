@@ -3,67 +3,64 @@ use std::{
     path::PathBuf,
 };
 
-use crate::discovery::matcher::match_candidate;
+use crate::discovery::matcher::{SUBSTRING_SCORE, match_candidate_multi};
 
 use super::DiscoveryCandidate;
-use super::Matchkind;
 use super::cache;
 
 /// Does a BFS to discover novel paths i.e. not previously visited, scored by match kind and fuzzy.
 pub fn bfs_discover(
     roots: &[PathBuf],
-    token: &str,
+    tokens: &[&str],
     max_depth: usize,
     max_results: usize,
     cache: &mut cache::FsCache,
 ) -> Vec<DiscoveryCandidate> {
-    let mut strong_results = Vec::new();
-    let mut fuzzy_results = Vec::new();
-
-    let mut visited = HashSet::new();
+    let mut candidates = Vec::new();
     let mut queue = VecDeque::new();
+    let mut visited = HashSet::new();
 
     for root in roots {
         if visited.insert(root.clone()) {
-            queue.push_back((root.clone(), 0));
+            queue.push_back(root.clone());
         }
     }
 
-    while let Some((dir, depth)) = queue.pop_front() {
-        if depth > max_depth {
-            continue;
-        }
-        for path in cache.list_dirs(&dir) {
-            // Skip duplicates
-            if !visited.insert(path.clone()) {
-                continue;
-            }
+     for depth in 1..=max_depth {
+        let mut next_queue = VecDeque::new();
 
-            // Extract directory name
-            let Some(name) = path.file_name().and_then(|n| n.to_str()) else {
-                continue;
-            };
+        while let Some(dir) = queue.pop_front() {
+            for path in cache.list_dirs(&dir) {
+                if !visited.insert(path.clone()) {
+                    continue;
+                }
 
-            let name_l = name.to_lowercase();
-            let token_l = token.to_lowercase();
+                if let Some(candidate) = match_candidate_multi(&path, tokens) {
+                    candidates.push(candidate);
+                }
 
-            if let Some(candidate) = match_candidate(&path, &name_l, &token_l) {
-                // 1. If it's a Strong match (Exact, Prefix, Substring), always keep it.
-                if candidate.match_kind != Matchkind::Fuzzy {
-                    strong_results.push(candidate);
-                // 2. If it's Fuzzy, only keep it if there's still room.
-                } else if strong_results.len() < max_results {
-                    fuzzy_results.push(candidate);
+                if depth < max_depth {
+                    next_queue.push_back(path);
                 }
             }
+        }
 
-            queue.push_back((path, depth + 1));
+        queue = next_queue;
+
+        // Prioritize strong matches i.e. exact, prefix and substring.
+        let strong_match_count = candidates
+            .iter()
+            .filter(|c| c.score >= SUBSTRING_SCORE)
+            .count();
+
+        if strong_match_count >= max_results {
+            break;
         }
     }
 
-    strong_results.extend(fuzzy_results);
+    // Sort by score descending.
+    candidates.sort_by(|a, b| b.score.total_cmp(&a.score));
+    candidates.truncate(max_results);
 
-    strong_results.truncate(max_results);
-
-    strong_results
+    candidates
 }

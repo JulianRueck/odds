@@ -1,114 +1,126 @@
+use crate::discovery::matcher::match_candidate_multi;
 use std::path::PathBuf;
 
-use crate::discovery::{Matchkind, matcher::match_candidate};
-
-
-fn path() -> PathBuf {
-    PathBuf::from("/some/path")
+fn path(s: &str) -> PathBuf {
+    PathBuf::from(s)
 }
 
-// --- match_candidate ---
+// --- single token ---
 
 #[test]
-fn exact_match() {
-    let result = match_candidate(&path(), "config", "config");
+fn single_token_exact() {
+    let result = match_candidate_multi(&path("/home/user/config"), &["config"]);
     assert!(result.is_some());
-    assert_eq!(result.unwrap().match_kind, Matchkind::Exact);
+    assert_eq!(result.unwrap().score, 100.0);
 }
 
 #[test]
-fn prefix_match() {
-    let result = match_candidate(&path(), "config", "con");
+fn single_token_prefix() {
+    let result = match_candidate_multi(&path("/home/user/config"), &["con"]);
     assert!(result.is_some());
-    assert_eq!(result.unwrap().match_kind, Matchkind::Prefix);
+    assert!(result.unwrap().score > 0.0);
 }
 
 #[test]
-fn substring_match() {
-    let result = match_candidate(&path(), "myconfig", "conf");
-    assert!(result.is_some());
-    assert_eq!(result.unwrap().match_kind, Matchkind::Substring);
-}
-
-#[test]
-fn fuzzy_match() {
-    let result = match_candidate(&path(), "configuration", "cfn");
-    assert!(result.is_some());
-    assert_eq!(result.unwrap().match_kind, Matchkind::Fuzzy);
-}
-
-#[test]
-fn no_match() {
-    let result = match_candidate(&path(), "config", "xyz");
+fn single_token_no_match() {
+    let result = match_candidate_multi(&path("/home/user/config"), &["xyz"]);
     assert!(result.is_none());
 }
 
-// --- match kind priority ---
+// --- multi token ---
 
 #[test]
-fn exact_beats_prefix() {
-    let exact = match_candidate(&path(), "src", "src").unwrap();
-    let prefix = match_candidate(&path(), "srcfiles", "src").unwrap();
+fn two_tokens_both_match_different_segments() {
+    let result = match_candidate_multi(&path("/home/user/projects/api"), &["proj", "api"]);
+    assert!(result.is_some());
+}
+
+#[test]
+fn two_tokens_order_independent() {
+    let a = match_candidate_multi(&path("/home/user/projects/api"), &["proj", "api"]);
+    let b = match_candidate_multi(&path("/home/user/projects/api"), &["api", "proj"]);
+    assert!(a.is_some());
+    assert!(b.is_some());
+    assert_eq!(a.unwrap().score, b.unwrap().score);
+}
+
+#[test]
+fn two_tokens_one_matches() {
+    let result = match_candidate_multi(&path("/home/user/projects/api"), &["api", "xyz"]);
+    assert!(result.is_some());
+    // partial match scores lower than full match
+    let full = match_candidate_multi(&path("/home/user/projects/api"), &["proj", "api"]);
+    assert!(result.unwrap().score < full.unwrap().score);
+}
+
+#[test]
+fn two_tokens_neither_matches() {
+    let result = match_candidate_multi(&path("/home/user/projects/api"), &["xyz", "abc"]);
+    assert!(result.is_none());
+}
+
+#[test]
+fn more_tokens_than_segments_clips_surplus() {
+    // path has 2 meaningful segments, 4 tokens supplied — should not panic
+    let result = match_candidate_multi(&path("/projects/api"), &["proj", "api", "foo", "bar"]);
+    // surplus tokens penalise the score
+    let fewer = match_candidate_multi(&path("/projects/api"), &["proj", "api"]);
+    assert!(result.unwrap().score < fewer.unwrap().score);
+}
+
+// --- optimal assignment ---
+
+#[test]
+fn hungarian_finds_optimal_over_greedy() {
+    // "con" prefix-matches "config" (70 * 3/6 = 35.0)
+    // "pro" prefix-matches "project" (70 * 3/7 ≈ 30.0)
+    // optimal avg: (35 + 30) / 2 = 32.5
+    // greedy worst case: one token stranded, other scores at best 35 → avg 17.5
+    let result = match_candidate_multi(&path("/project/config"), &["con", "pro"]);
+    let score = result.unwrap().score;
+    assert!(score > 17.5);
+}
+
+// --- score ordering ---
+
+#[test]
+fn exact_match_scores_higher_than_prefix() {
+    let exact = match_candidate_multi(&path("/home/api"), &["api"]).unwrap();
+    let prefix = match_candidate_multi(&path("/home/apiary"), &["api"]).unwrap();
     assert!(exact.score > prefix.score);
 }
 
 #[test]
-fn prefix_beats_substring() {
-    let prefix = match_candidate(&path(), "config", "con").unwrap();
-    let substring = match_candidate(&path(), "myconfig", "con").unwrap();
+fn prefix_scores_higher_than_substring() {
+    let prefix = match_candidate_multi(&path("/home/config"), &["con"]).unwrap();
+    let substring = match_candidate_multi(&path("/home/myconfig"), &["con"]).unwrap();
     assert!(prefix.score > substring.score);
 }
 
 #[test]
-fn substring_beats_fuzzy() {
-    let substring = match_candidate(&path(), "myconfig", "con").unwrap();
-    let fuzzy = match_candidate(&path(), "configuration", "cfn").unwrap();
-    assert!(substring.score > fuzzy.score);
-}
-
-// --- fuzzy score cap ---
-
-#[test]
-fn fuzzy_score_never_exceeds_cap() {
-    let result = match_candidate(&path(), "abcdefghij", "abcdefghij");
-    // Even a near-perfect fuzzy match should not exceed 45.0
-    if let Some(candidate) = result {
-        if candidate.match_kind == Matchkind::Fuzzy {
-            assert!(candidate.score <= 45.0);
-        }
-    }
+fn full_match_scores_higher_than_partial() {
+    let full = match_candidate_multi(&path("/projects/api"), &["projects", "api"]).unwrap();
+    let partial = match_candidate_multi(&path("/projects/api"), &["projects", "xyz"]).unwrap();
+    assert!(full.score > partial.score);
 }
 
 // --- edge cases ---
 
 #[test]
-fn empty_token_matches_nothing() {
-    let result = match_candidate(&path(), "config", "");
+fn empty_tokens_returns_none() {
+    let result = match_candidate_multi(&path("/home/user/config"), &[]);
     assert!(result.is_none());
 }
 
 #[test]
-fn empty_name_matches_nothing() {
-    let result = match_candidate(&path(), "", "config");
+fn empty_path_returns_none() {
+    let result = match_candidate_multi(&PathBuf::new(), &["config"]);
     assert!(result.is_none());
 }
 
 #[test]
-fn single_character_exact_match() {
-    let result = match_candidate(&path(), "s", "s");
-    assert!(result.is_some());
-    assert_eq!(result.unwrap().match_kind, Matchkind::Exact);
-}
-
-#[test]
-fn token_longer_than_name_does_not_match() {
-    let result = match_candidate(&path(), "src", "source");
-    assert!(result.is_none());
-}
-
-#[test]
-fn fuzzy_requires_all_chars_in_order() {
-    // "cfg" should not match "config" fuzzily if characters aren't all present in order
-    let result = match_candidate(&path(), "con", "cfg");
-    assert!(result.is_none());
+fn single_token_short_is_penalised() {
+    let short = match_candidate_multi(&path("/home/config"), &["c"]).unwrap();
+    let long = match_candidate_multi(&path("/home/config"), &["con"]).unwrap();
+    assert!(short.score < long.score);
 }

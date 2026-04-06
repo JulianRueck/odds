@@ -19,7 +19,7 @@ odds() { o "$@" }
 pub struct Cli {
     #[arg(long)]
     pub init: Option<String>,
-    pub token: Option<String>,
+    pub tokens: Vec<String>,
 }
 
 impl Cli {

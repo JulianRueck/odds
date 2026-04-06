@@ -1,6 +1,24 @@
 use std::io::{self, Write};
 
-use crate::ranking::{ConfidenceRules, RankedCandidate};
+use crate::ranking::RankedCandidate;
+
+/// Denotes confidence in a candidate in order effectuate auto jump functionality.
+#[derive(Debug)]
+pub struct ConfidenceRules {
+    pub min_score: f32,
+    pub min_gap: f32,
+    pub min_match_score: f32,
+}
+
+impl Default for ConfidenceRules {
+    fn default() -> Self {
+        Self {
+            min_score: 70.0,
+            min_gap: 20.0,
+            min_match_score: 25.0,
+        }
+    }
+}
 
 pub enum SelectionStrategy {
     Manual { choice: usize },
@@ -54,15 +72,19 @@ pub fn select_index(candidates: &[RankedCandidate], strategy: SelectionStrategy)
         }
 
         SelectionStrategy::Confident { rules } => {
-            if candidates.len() <= 1 {
-                return (!candidates.is_empty()).then_some(0);
+            let first = candidates.first()?;
+
+            if first.score < rules.min_match_score {
+                return None;
             }
 
-            let first = &candidates[0];
-            let second = &candidates[1];
+            let second = match candidates.get(1) {
+                Some(s) => s,
+                None => return Some(0),
+            };
 
-            if first.ml_score >= rules.min_score
-                && first.ml_score - second.ml_score >= rules.min_gap
+            if first.ranked_score >= rules.min_score
+                && first.ranked_score - second.ranked_score >= rules.min_gap
             {
                 Some(0)
             } else {

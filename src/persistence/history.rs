@@ -5,7 +5,7 @@ use std::{
 };
 
 use crate::{
-    discovery::{DiscoveryCandidate, matcher::match_candidate},
+    discovery::{DiscoveryCandidate, matcher::{match_candidate_multi}},
     persistence::persistable::Persistable,
 };
 
@@ -42,15 +42,11 @@ impl History {
     }
 
     /// Collect all candidate entries from history.
-    pub fn history_candidates(&self, token: &str) -> Vec<DiscoveryCandidate> {
-        let token_l = token.to_lowercase();
-
+    pub fn history_candidates(&self, tokens: &[&str]) -> Vec<DiscoveryCandidate> {
         self.entries
             .iter()
             .filter_map(|entry| {
-                let name_l = entry.path.file_name()?.to_str()?.to_lowercase();
-
-                match_candidate(&entry.path, &name_l, &token_l)
+                match_candidate_multi(&entry.path, tokens)
             })
             .collect()
     }

@@ -12,7 +12,6 @@ pub mod matcher;
 #[derive(Debug)]
 pub struct DiscoveryCandidate {
     pub path: PathBuf,
-    pub match_kind: Matchkind,
     pub score: f32,
 }
 
@@ -20,7 +19,6 @@ impl Default for DiscoveryCandidate {
     fn default() -> Self {
         Self {
             path: PathBuf::new(),
-            match_kind: Matchkind::Exact, 
             score: 0.0,
         }
     }
@@ -34,10 +32,9 @@ pub enum Matchkind {
     Fuzzy,
 }
 
-pub fn discover(token: &str, max_depth: usize, max_results: usize) -> Vec<DiscoveryCandidate> {
-    let mut cache = FsCache::new();
-
+pub fn discover(tokens: &[&str], max_depth: usize, max_results: usize) -> Vec<DiscoveryCandidate> {
     let roots = paths::search_roots();
-
-    bfs_discover(&roots, token, max_depth, max_results, &mut cache)
+    let mut cache = FsCache::new();
+    
+    bfs_discover(&roots, tokens, max_depth, max_results, &mut cache)
 }
