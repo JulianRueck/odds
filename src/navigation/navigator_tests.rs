@@ -34,9 +34,8 @@ fn confident_success() {
     let candidates = vec![rc(0.9), rc(0.5)];
 
     let rules = ConfidenceRules {
-        min_score: 0.8,
-        min_gap: 0.3,
-        min_match_score: 0.0,
+        min_ranked_score: 0.8,
+        min_score: 0.0,
     };
 
     let index = select_index(&candidates, SelectionStrategy::Confident { rules });
@@ -49,9 +48,8 @@ fn confident_pick_returns_top_candidate() {
     let candidates = vec![rc(0.9), rc(0.5)];
 
     let rules = ConfidenceRules {
-        min_score: 0.8,
-        min_gap: 0.3,
-        min_match_score: 0.0,
+        min_ranked_score: 0.8,
+        min_score: 0.0,
     };
 
     let result = confident_pick(&candidates, rules);
