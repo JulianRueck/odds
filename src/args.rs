@@ -1,4 +1,4 @@
-use clap::Parser;
+use clap::{Parser, Subcommand};
 
 pub const BASH_ZSH_SCRIPT: &str = r#"
 o() {
@@ -8,30 +8,44 @@ o() {
         cd -
     else
         local result
-        result=$(command odds "$@") && [ -n "$result" ] && cd "$result"
+        result=$(command odds query "$@") && [ -n "$result" ] && cd "$result"
     fi
 }
 "#;
 
 #[derive(Parser)]
-#[command(name = "o")]
+#[command(name = "odds")]
 pub struct Cli {
-    #[arg(long)]
-    pub init: Option<String>,
-    #[arg(long)]
-    pub seed: bool,
-    pub tokens: Vec<String>,
+    #[command(subcommand)]
+    pub command: Option<Commands>,
+}
+
+#[derive(Subcommand)]
+pub enum Commands {
+    Init {
+        shell: String,
+    },
+
+    Seed,
+
+    #[command(hide = true)]
+    Query {
+        tokens: Vec<String>,
+    },
 }
 
 impl Cli {
-    pub fn handle_init(&self) -> bool {
-        if let Some(shell_type) = &self.init {
-            match shell_type.as_str() {
-                "bash" | "zsh" => println!("{}", BASH_ZSH_SCRIPT),
-                _ => eprintln!("Unsupported shell: {}", shell_type),
+    pub fn handle_init(shell_type: &str) -> bool {
+        match shell_type {
+            "bash" | "zsh" => {
+                // Use print! to avoid trailing double-newlines in eval
+                print!("{}", BASH_ZSH_SCRIPT);
+                true
             }
-            return true;
+            _ => {
+                eprintln!("Unsupported shell: {}", shell_type);
+                false
+            }
         }
-        false
     }
 }

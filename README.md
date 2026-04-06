@@ -57,8 +57,8 @@ cp target/release/odds ~/.local/bin/
 
 Add the following to your `.bashrc` or `.zshrc`:
 ```bash
-eval "$(odds --init bash)"   # for bash
-eval "$(odds --init zsh)"    # for zsh
+eval "$(odds init bash)"   # for bash
+eval "$(odds init zsh)"    # for zsh
 ```
 
 Then reload your shell:
@@ -99,17 +99,17 @@ Enter number: 2
 
 ### Seeding from shell history
 
-On a fresh install odds has no history to learn from. The `--seed` command bootstraps it from your existing shell history file, extracting `cd` commands and building an initial frecency and Markov dataset:
+On a fresh install odds has no history to learn from. The `seed` command bootstraps it from your existing shell history file, extracting `cd` commands and building an initial frecency and Markov dataset:
 ```bash
-o --seed
+odds seed
 ```
 
 odds automatically detects your history file via `$HISTFILE`, falling back to `~/.zsh_history` and `~/.bash_history`. You can also point it at a specific file:
 ```bash
-HISTFILE=~/.bash_history o --seed
+HISTFILE=~/.bash_history odds seed
 ```
 
-Running `--seed` multiple times is safe — it merges into existing data rather than overwriting it.
+Running `seed` multiple times is safe — it merges into existing data rather than overwriting it.
 
 ## Data storage
 

@@ -1,9 +1,12 @@
 use clap::Parser;
 
 use odds::{
-    args::Cli,
+    args::{Cli, Commands},
     discovery::{self},
-    navigation::{navigator, picker::{self, ConfidenceRules}},
+    navigation::{
+        navigator,
+        picker::{self, ConfidenceRules},
+    },
     paths,
     persistence::{History, Session},
     ranking::ranker,
@@ -13,20 +16,33 @@ use odds::{
 fn main() {
     let cli = Cli::parse();
 
-    if cli.handle_init() {
-        return;
-    }
-    if cli.seed {
-        if let Err(e) = seeder::seed() {
-            eprintln!("Error seeding odds: {e}");
+    match &cli.command {
+        Some(Commands::Init { shell }) => {
+            Cli::handle_init(shell);
+            return;
         }
-        return;
-    }
-    if cli.tokens.is_empty() {
-        return;
-    }
 
-    let tokens: Vec<&str> = cli.tokens.iter().map(|t| t.as_str()).collect();
+        Some(Commands::Seed) => {
+            if let Err(e) = seeder::seed() {
+                eprintln!("Error seeding odds: {e}");
+            }
+            return;
+        }
+
+        Some(Commands::Query { tokens }) => {
+            if !tokens.is_empty() {
+                odds(tokens);
+            }
+        }
+
+        None => {
+            eprintln!("Usage: odds <COMMAND>");
+        }
+    }
+}
+
+fn odds(raw_tokens: &[String]) {
+    let tokens: Vec<&str> = raw_tokens.iter().map(|t| t.as_str()).collect();
 
     let mut session = Session::load_or_new();
     let mut history = History::load_or_new();
@@ -52,7 +68,7 @@ fn main() {
 
     // Bounded discovery.
     let discovery_candidates = discovery::discover(&tokens, MAX_DEPTH, MAX_RESULTS);
-    
+
     let ranked_candidates = ranker::rank_candidates(discovery_candidates, &history, &session, MAX_RESULTS);
 
     // Picker.
