@@ -35,7 +35,7 @@ pub fn pick_and_jump(candidates: &[RankedCandidate], history: &mut History, sess
     } else if let Some(picked) = picker::pick_directory(candidates) {
         do_jump(&picked.path, history, session);
     } else {
-        println!("No directory selected.");
+        eprintln!("No directory selected.");
     }
 }
 

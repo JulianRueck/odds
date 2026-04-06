@@ -120,6 +120,10 @@ impl Session {
 
     /// Register the amount of transitions from one path to another.
     pub fn register_markov_chain(&mut self, from: &PathBuf, to: &PathBuf) {
+        if !from.is_absolute() || !to.is_absolute() {
+            return;
+        }
+        
         let from_str = from.to_str().expect("Invalid UTF-8 in current path.");
         let to_str = to.to_str().expect("Invalid UTF-8 in path.");
 
