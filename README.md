@@ -4,20 +4,22 @@ A smarter `cd`. You know where you want to go. Now your shell does too.
 
 ## What is it?
 
-`odds` learns from your navigation history and gets you where you're going with minimal typing. Type a keyword and it jumps straight to the most likely match. Not confident enough to auto-jump? It shows you a numbered list to pick from.
-
+`odds` learns from your navigation history and gets you where you're going with minimal typing. Type one or more keywords and it jumps straight to the most likely match. Not confident enough to auto-jump? It shows you a numbered list to pick from.
 ```bash
 o config
 # → /home/user/projects/myapp/config
+
+o proj api
+# → /home/user/projects/myapp/api
 ```
 
 ## How it works
 
-When you run `o <keyword>`, odds:
+When you run `o <keywords>`, odds:
 
-1. **Searches your history** for directories whose name matches the keyword (exact, prefix, substring, or fuzzy match).
+1. **Searches your history** for directories whose path segments match the keywords using the Hungarian algorithm to find the optimal assignment of tokens to path segments — order doesn't matter.
 2. **Scores each candidate** using a combination of signals:
-   - Match quality (exact > prefix > substring > fuzzy)
+   - Match quality (exact > prefix > substring > fuzzy), averaged across all tokens
    - Frecency — how often and how recently you've visited (with exponential decay, ~3-day half-life)
    - Markov chain — what directories you tend to jump to *from* your current location
    - Session context — directories you've already visited this session
@@ -25,7 +27,6 @@ When you run `o <keyword>`, odds:
 4. **If still ambiguous**, presents up to 9 options for you to pick from.
 
 You can also pass an explicit path and `o` will jump directly:
-
 ```bash
 o ./some/explicit/path
 ```
@@ -41,7 +42,6 @@ o ./some/explicit/path
 - [Rust toolchain](https://rustup.rs/)
 
 ### Build from source
-
 ```bash
 git clone https://github.com/JulianRueck/odds.git
 cd odds
@@ -49,7 +49,6 @@ cargo build --release
 ```
 
 Then move the binary somewhere on your `$PATH`:
-
 ```bash
 cp target/release/odds ~/.local/bin/
 ```
@@ -57,14 +56,12 @@ cp target/release/odds ~/.local/bin/
 ### Shell integration
 
 Add the following to your `.bashrc` or `.zshrc`:
-
 ```bash
 eval "$(odds --init bash)"   # for bash
 eval "$(odds --init zsh)"    # for zsh
 ```
 
 Then reload your shell:
-
 ```bash
 source ~/.zshrc  # or ~/.bashrc
 ```
@@ -74,16 +71,16 @@ source ~/.zshrc  # or ~/.bashrc
 ## Usage
 
 ### Jump to a directory
-
 ```bash
-o <keyword>
+o <keywords>
+```
+```bash
+o config          # → /home/user/projects/myapp/config
+o proj api        # → /home/user/projects/myapp/api
+o work client     # → /home/user/work/client
 ```
 
-```bash
-o config    # → /home/user/projects/myapp/config
-o tests     # → /home/user/projects/myapp/tests
-o work      # → /home/user/work
-```
+Keywords are matched against path segments in any order — `o api proj` and `o proj api` produce the same results. Partial matches are allowed and scored proportionally, so you don't need to remember exact names.
 
 ### Picker mode
 
@@ -92,7 +89,7 @@ When odds isn't confident about the best match, it shows a numbered list of up t
 ```
 $ o api
 
-Select a directory (1-3), or 0 to cancel:
+Select a directory (1-3):
 1) /home/user/projects/myapp/api
 2) /home/user/projects/legacy/api
 3) /home/user/work/client/api
@@ -100,7 +97,19 @@ Enter number: 2
 # → /home/user/projects/legacy/api
 ```
 
-Enter `0` to cancel without navigating.
+### Seeding from shell history
+
+On a fresh install odds has no history to learn from. The `--seed` command bootstraps it from your existing shell history file, extracting `cd` commands and building an initial frecency and Markov dataset:
+```bash
+o --seed
+```
+
+odds automatically detects your history file via `$HISTFILE`, falling back to `~/.zsh_history` and `~/.bash_history`. You can also point it at a specific file:
+```bash
+HISTFILE=~/.bash_history o --seed
+```
+
+Running `--seed` multiple times is safe — it merges into existing data rather than overwriting it.
 
 ## Data storage
 

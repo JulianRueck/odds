@@ -31,7 +31,7 @@ pub fn pick_directory(candidates: &[RankedCandidate]) -> Option<&RankedCandidate
     }
 
     eprintln!(
-        "Select a directory (1-{}), or 0 to cancel:",
+        "Select a directory (1-{}):",
         candidates.len()
     );
 

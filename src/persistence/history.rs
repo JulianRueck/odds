@@ -12,7 +12,7 @@ use crate::{
 #[derive(Debug, Serialize, Deserialize)]
 pub struct HistoryEntry {
     pub path: PathBuf,
-    pub visits: u64,
+    pub visits: usize,
     pub last_visited: u64,
 }
 
@@ -65,7 +65,7 @@ impl History {
         new_history
     }
 
-    pub fn visit_count(&self, path: &PathBuf) -> u64 {
+    pub fn visit_count(&self, path: &PathBuf) -> usize {
         self.entries
             .iter()
             .find(|e| e.path == *path)
