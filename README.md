@@ -1,4 +1,4 @@
-# odds 🚀
+# odds
 
 A smarter `cd`. You know where you want to go. Now your shell does too.
 
