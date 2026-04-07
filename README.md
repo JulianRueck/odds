@@ -33,15 +33,21 @@ o ./some/explicit/path
 
 ## Installation
 
-`odds` is not yet available in a package repository and must be installed manually.
-
 ### Prerequisites
 
 - Linux or macOS
 - Shell: `bash` or `zsh`
 - [Rust toolchain](https://rustup.rs/)
 
-### Build from source
+`odds` is not yet available on crates.io, but you can install it directly from Git using Cargo.
+
+### Recommended: install with Cargo
+
+```bash
+cargo install --git https://github.com/JulianRueck/odds
+```
+
+### Alternative: Build from source
 ```bash
 git clone https://github.com/JulianRueck/odds.git
 cd odds
