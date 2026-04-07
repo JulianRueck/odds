@@ -50,15 +50,16 @@ cargo build --release
 
 Then move the binary somewhere on your `$PATH`:
 ```bash
-cp target/release/odds ~/.local/bin/
+cp target/release/odds ~/.local/bin/      # user only
+cp target/release/odds /usr/local/bin/    # system-wide
 ```
 
 ### Shell integration
 
 Add the following to your `.bashrc` or `.zshrc`:
 ```bash
-eval "$(odds init bash)"   # for bash
-eval "$(odds init zsh)"    # for zsh
+eval "$(odds init bash)"    # for bash
+eval "$(odds init zsh)"     # for zsh
 ```
 
 Then reload your shell:
@@ -75,9 +76,9 @@ source ~/.zshrc  # or ~/.bashrc
 o <keywords>
 ```
 ```bash
-o config          # → /home/user/projects/myapp/config
-o proj api        # → /home/user/projects/myapp/api
-o work client     # → /home/user/work/client
+o config         # → /home/user/projects/myapp/config
+o proj api       # → /home/user/projects/myapp/api
+o work client    # → /home/user/work/client
 ```
 
 Keywords are matched against path segments in any order — `o api proj` and `o proj api` produce the same results. Partial matches are allowed and scored proportionally, so you don't need to remember exact names.
