@@ -29,10 +29,8 @@ fn main() {
             return;
         }
 
-        Some(Commands::Query { tokens }) => {
-            if !tokens.is_empty() {
-                odds(tokens);
-            }
+        Some(Commands::Query { tokens }) => {  
+            odds(tokens);
         }
 
         None => {
@@ -42,15 +40,34 @@ fn main() {
 }
 
 fn odds(raw_tokens: &[String]) {
-    let tokens: Vec<&str> = raw_tokens.iter().map(|t| t.as_str()).collect();
-
     let mut session = Session::load_or_new();
     let mut history = History::load_or_new();
 
     const MAX_RESULTS: usize = 9;
     const MAX_DEPTH: usize = 5;
 
-    // Do a regular cd if it's an explicit path.
+    // No arguments jumps to ~ just like cd while still registering the jump.
+    if raw_tokens.is_empty() {
+        navigator::do_jump(&paths::home_dir(), &mut history, &mut session);
+        return;
+    }
+
+    // Mimicking 'cd -' beahviour whilst still registering the jump.
+    if raw_tokens.len() == 1 && raw_tokens[0] == "-" {
+        if let Some(previous) = session.previous().cloned() {
+            let home = paths::home_dir();
+            let display = previous.strip_prefix(&home)
+                .map(|p| format!("~/{}", p.display()))
+                .unwrap_or_else(|_| previous.display().to_string());
+            eprintln!("{}", display);
+            navigator::do_jump(&previous, &mut history, &mut session);
+        }
+        return;
+    }
+
+    let tokens: Vec<&str> = raw_tokens.iter().map(|t| t.as_str()).collect();
+
+    // Jump immediately if it's an explicit path.
     if let Some(dir) = paths::detect_explicit_path(tokens[0]) {
         navigator::do_jump(&dir, &mut history, &mut session);
         return;

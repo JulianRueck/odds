@@ -2,13 +2,12 @@ use clap::{Parser, Subcommand};
 
 pub const BASH_ZSH_SCRIPT: &str = r#"
 o() {
-    if [ "$#" -eq 0 ]; then
-        cd ~
+    local result
+    result=$(command odds query "$@")
+    if [ -n "$result" ]; then
+        cd "$result"
     elif [ "$#" -eq 1 ] && [ "$1" = "-" ]; then
         cd -
-    else
-        local result
-        result=$(command odds query "$@") && [ -n "$result" ] && cd "$result"
     fi
 }
 "#;
@@ -30,6 +29,7 @@ pub enum Commands {
 
     #[command(hide = true)]
     Query {
+        #[arg(allow_hyphen_values = true, trailing_var_arg = true)]
         tokens: Vec<String>,
     },
 }

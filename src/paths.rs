@@ -48,8 +48,16 @@ pub fn normalize<P: AsRef<Path>>(path: P) -> PathBuf {
 /// Prefixes file name with the machines home plus storage path e.g.
 /// ~/.local/share/cdd/<file>
 pub fn persistence_path(file: &str) -> PathBuf {
-    let home = std::env::var("HOME").unwrap_or_else(|_| ".".into());
-    PathBuf::from(home).join(format!("{}{}", STORAGE_PATH, file))
+    home_dir().join(STORAGE_PATH).join(file)
+}
+
+pub fn home_dir() -> PathBuf {
+    std::env::var("HOME")
+        .map(PathBuf::from)
+        .unwrap_or_else(|_| {
+            eprintln!("Warning: $HOME is not set, falling back to current directory.");
+            PathBuf::from(".")
+        })
 }
 
 fn find_git_root(start: &Path) -> Option<PathBuf> {
