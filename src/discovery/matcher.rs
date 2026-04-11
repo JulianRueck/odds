@@ -46,7 +46,7 @@ pub fn match_candidate_multi(path: &PathBuf, tokens: &[&str]) -> Option<Discover
 
     let cols = segments.len();
     // Having more rows than columns would make Hungarian panic.
-    // Avarage is still calculated by total length of tokens, making for a penalty.
+    // Average is still calculated by total length of tokens, making for a penalty.
     let rows = tokens_l.len().min(cols);
 
     let matrix = Matrix::from_fn(rows, cols, |(t, s)| {

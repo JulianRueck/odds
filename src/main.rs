@@ -52,7 +52,7 @@ fn odds(raw_tokens: &[String]) {
         return;
     }
 
-    // Mimicking 'cd -' beahviour whilst still registering the jump.
+    // Mimicking 'cd -' behaviour whilst still registering the jump.
     if raw_tokens.len() == 1 && raw_tokens[0] == "-" {
         if let Some(previous) = session.previous().cloned() {
             let home = paths::home_dir();

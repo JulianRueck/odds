@@ -15,7 +15,7 @@ pub fn detect_explicit_path(input: &str) -> Option<PathBuf> {
 }
 /// Returns the roots from which the program is going to search for candidates;
 /// which are: the current working directory, home
-/// and potentialy a git repository i.e. a folder contaning a .git file.
+/// and potentially a git repository i.e. a folder containing .git.
 pub fn search_roots() -> Vec<PathBuf> {
     let mut roots = Vec::new();
 
@@ -46,7 +46,7 @@ pub fn normalize<P: AsRef<Path>>(path: P) -> PathBuf {
 }
 
 /// Prefixes file name with the machines home plus storage path e.g.
-/// ~/.local/share/cdd/<file>
+/// ~/.local/share/odds/<file>
 pub fn persistence_path(file: &str) -> PathBuf {
     home_dir().join(STORAGE_PATH).join(file)
 }

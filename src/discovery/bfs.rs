@@ -8,7 +8,7 @@ use crate::discovery::matcher::{SUBSTRING_SCORE, match_candidate_multi};
 use super::DiscoveryCandidate;
 use super::cache;
 
-/// Does a BFS to discover novel paths i.e. not previously visited, scored by match kind and fuzzy.
+/// Does a BFS to discover novel paths i.e. not previously visited.
 pub fn bfs_discover(
     roots: &[PathBuf],
     tokens: &[&str],
@@ -47,7 +47,7 @@ pub fn bfs_discover(
 
         queue = next_queue;
 
-        // Prioritize strong matches i.e. exact, prefix and substring.
+        // Prioritise strong matches i.e., exact, prefix and substring.
         let strong_match_count = candidates
             .iter()
             .filter(|c| c.score >= SUBSTRING_SCORE)

@@ -2,7 +2,7 @@ use std::io::{self, Write};
 
 use crate::ranking::RankedCandidate;
 
-/// Denotes confidence in a candidate in order effectuate auto jump functionality.
+/// Denotes confidence in a candidate in order to effectuate auto jump functionality.
 #[derive(Debug)]
 pub struct ConfidenceRules {
     pub min_ranked_score: f32,
