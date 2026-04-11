@@ -39,12 +39,10 @@ o ./some/explicit/path
 - Shell: `bash` or `zsh`
 - [Rust toolchain](https://rustup.rs/)
 
-`odds` is not yet available on crates.io, but you can install it directly from Git using Cargo.
-
 ### Recommended: install with Cargo
 
 ```bash
-cargo install --git https://github.com/JulianRueck/odds
+cargo install odds-rueck
 ```
 
 ### Alternative: Build from source
