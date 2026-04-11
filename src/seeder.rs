@@ -31,7 +31,7 @@ pub fn seed() -> anyhow::Result<()> {
     let mut session = Session::load_or_new();
 
     merge_history(&mut history, &paths, now);
-    merge_session(&mut session, &paths);
+    merge_session(&mut history, &paths);
 
     history.save()?;
     session.save()?;
@@ -39,7 +39,7 @@ pub fn seed() -> anyhow::Result<()> {
     eprintln!(
         "Seeded {} directories and {} transitions.",
         history.entries.len(),
-        session.transition_count()
+        history.transition_count()
     );
 
     Ok(())
@@ -155,8 +155,8 @@ fn merge_history(history: &mut History, paths: &[PathBuf], now: u64) {
     }
 }
 
-fn merge_session(session: &mut Session, paths: &[PathBuf]) {
+fn merge_session(history: &mut History, paths: &[PathBuf]) {
     for window in paths.windows(2) {
-        session.register_markov_chain(&window[0], &window[1]);
+        history.register_markov_chain(&window[0], &window[1]);
     }
 }

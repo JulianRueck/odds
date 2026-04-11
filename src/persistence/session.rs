@@ -1,6 +1,5 @@
 use serde::{Deserialize, Serialize};
 use std::{
-    collections::HashMap,
     path::PathBuf,
     time::{SystemTime, UNIX_EPOCH},
 };
@@ -17,7 +16,6 @@ pub struct Session {
     max_size: usize,
     entries: Vec<SessionEntry>,
     saved_at: u64,
-    chain: HashMap<String, HashMap<String, usize>>,
 }
 
 const SESSION_EXPIRY_SECS: u64 = 43200; // 12 hours
@@ -29,7 +27,6 @@ impl Default for Session {
             max_size: MAX_SIZE,
             entries: Vec::new(),
             saved_at: time_now(),
-            chain: HashMap::new(),
         }
     }
 }
@@ -38,8 +35,6 @@ impl Session {
     /// Push a directory onto the session stack.
     pub fn push(&mut self, path: &PathBuf) {
         let path = paths::normalize(path);
-
-        self.register_markov_chain_from_current(&path);
 
         // If already current do nothing
         if self.current() == Some(&path) {
@@ -58,9 +53,12 @@ impl Session {
         }
     }
 
-    /// Get current directory.
     pub fn current(&self) -> Option<&PathBuf> {
         self.entries.first().map(|e| &e.path)
+    }
+
+    pub fn previous(&self) -> Option<&PathBuf> {
+        self.entries.get(1).map(|e| &e.path)
     }
 
     /// List all directories (most recent first).
@@ -103,46 +101,6 @@ impl Session {
         }
 
         new_session
-    }
-
-    /// Calculate the probability of visiting the target from the source.
-    pub fn calculate_probability_from(&self, to: &str, from: &str) -> f32 {
-        if let Some(dest_map) = self.chain.get(from) {
-            let count = *dest_map.get(to).unwrap_or(&0) as f32;
-            let total: usize = dest_map.values().sum();
-
-            if total > 0 {
-                return count / total as f32;
-            }
-        }
-        0.0
-    }
-
-    /// Register the amount of transitions from one path to another.
-    pub fn register_markov_chain(&mut self, from: &PathBuf, to: &PathBuf) {
-        if !from.is_absolute() || !to.is_absolute() {
-            return;
-        }
-        
-        let from_str = from.to_str().expect("Invalid UTF-8 in current path.");
-        let to_str = to.to_str().expect("Invalid UTF-8 in path.");
-
-        if from_str != to_str {
-            let dest_map = self.chain.entry(from_str.to_string()).or_default();
-            let count = dest_map.entry(to_str.to_string()).or_insert(0);
-
-            *count += 1;
-        }
-    }
-
-    pub fn transition_count(&self) -> usize {
-        self.chain.values().map(|dest_map| dest_map.len()).sum()
-    }
-
-    fn register_markov_chain_from_current(&mut self, to: &PathBuf) {
-        if let Some(current_path) = self.current().cloned() {
-            self.register_markov_chain(&current_path, to);
-        }
     }
 }
 

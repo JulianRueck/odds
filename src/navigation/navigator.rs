@@ -11,7 +11,11 @@ use super::picker;
 pub fn do_jump(dir: &PathBuf, history: &mut History, session: &mut Session) {
     println!("{}", dir.display());
 
-    session.push(&dir);
+    if let Some(current) = session.current() {
+        history.register_markov_chain(current, dir);
+    }
+
+    session.push(dir);
 
     if let Err(e) = session.save() {
         eprintln!("Error saving session while jumping: {e}")

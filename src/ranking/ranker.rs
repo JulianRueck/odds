@@ -60,7 +60,7 @@ fn score_candidate(
             let to_str = candidate.path.to_str().expect("Invalid UTF-8 in path.");
             let from_str = from.to_str().expect("Invalid UTF-8 in current path.");
 
-            let prob = session.calculate_probability_from(to_str, from_str);
+            let prob = history.calculate_probability_from(to_str, from_str);
 
             score += prob * MARKOV_WEIGHT;
         }
