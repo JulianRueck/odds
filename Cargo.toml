@@ -1,7 +1,21 @@
 [package]
-name = "odds"
+name = "odds-rueck"
 version = "0.1.0"
 edition = "2024"
+description = "A smarter cd. You know where you want to go. Now your shell does too."
+license = "MIT"
+repository = "https://github.com/JulianRueck/odds"
+readme = "README.md"
+exclude = [".*", "**/*_tests.rs"]
+keywords = ["cd", "navigation", "shell", "filesystem", "jump"]
+categories = ["command-line-utilities"]
+
+[lib]
+name = "odds"
+
+[[bin]]
+name = "odds"
+path = "src/main.rs"
 
 [dependencies]
 anyhow = "1.0.102"
