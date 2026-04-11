@@ -1,6 +1,12 @@
+<div align="center">
+
 # odds
 
-A smarter `cd`. You know where you want to go. Now your shell does too.
+[![crates.io](https://img.shields.io/crates/v/odds-rueck.svg)](https://crates.io/crates/odds-rueck)
+
+#### A smarter `cd`. You know where you want to go. Now your shell does too.
+
+</div>
 
 ## What is it?
 
