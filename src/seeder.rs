@@ -59,7 +59,6 @@ fn detect_hist_file() -> anyhow::Result<PathBuf> {
     let candidates = [
         format!("{home}/.zsh_history"),
         format!("{home}/.bash_history"),
-        //format!("{home}/.local/share/fish/fish_history"), // TODO: impl Fish support
     ];
 
     for path in &candidates {

@@ -12,6 +12,22 @@ o() {
 }
 "#;
 
+pub const BASH_EXTRA: &str = r#"
+_odds_register() {
+    if [ "$PWD" != "$_ODDS_LAST_PWD" ]; then
+        (command odds register --pwd "$PWD" &>/dev/null &)
+        _ODDS_LAST_PWD="$PWD"
+    fi
+}
+PROMPT_COMMAND="_odds_register;${PROMPT_COMMAND}"
+"#;
+
+pub const ZSH_EXTRA: &str = r#"
+chpwd() {
+    (command odds register --pwd "$PWD" &>/dev/null &)
+}
+"#;
+
 #[derive(Parser)]
 #[command(name = "odds")]
 pub struct Cli {
@@ -28,6 +44,12 @@ pub enum Commands {
     Seed,
 
     #[command(hide = true)]
+    Register {
+        #[arg(long)]
+        pwd: String,
+    },
+
+    #[command(hide = true)]
     Query {
         #[arg(allow_hyphen_values = true, trailing_var_arg = true)]
         tokens: Vec<String>,
@@ -37,9 +59,12 @@ pub enum Commands {
 impl Cli {
     pub fn handle_init(shell_type: &str) -> bool {
         match shell_type {
-            "bash" | "zsh" => {
-                // Use print! to avoid trailing double-newlines in eval
-                print!("{}", BASH_ZSH_SCRIPT);
+            "bash" => {
+                print!("{}{}", BASH_ZSH_SCRIPT, BASH_EXTRA);
+                true
+            }
+            "zsh" => {
+                print!("{}{}", BASH_ZSH_SCRIPT, ZSH_EXTRA);
                 true
             }
             _ => {
