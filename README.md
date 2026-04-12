@@ -10,31 +10,15 @@
 
 ## What is it?
 
-`odds` learns from your navigation history and gets you where you're going with minimal typing. Type one or more keywords and it jumps straight to the most likely match. Not confident enough to auto-jump? It shows you a numbered list to pick from.
+odds silently learns from every directory change you make. The more you navigate, the better it gets at predicting where you want to go next — combining where you've been, how recently, and what you tend to do from your current location.
+
+Type a keyword or two and odds finds the best match. Confident enough? It jumps immediately. Not sure? It shows you a list to pick from. Never been there before? It searches your filesystem and ranks what it finds.
 ```bash
 o config
 # → /home/user/projects/myapp/config
 
 o proj api
 # → /home/user/projects/myapp/api
-```
-
-## How it works
-
-When you run `o <keywords>`, odds:
-
-1. **Searches your history** for directories whose path segments match the keywords using the Hungarian algorithm to find the optimal assignment of tokens to path segments — order doesn't matter.
-2. **Scores each candidate** using a combination of signals:
-   - Match quality (exact > prefix > substring > fuzzy), averaged across all tokens
-   - Frecency — how often and how recently you've visited (with exponential decay, ~3-day half-life)
-   - Markov chain — what directories you tend to jump to *from* your current location
-   - Session context — directories you've already visited this session
-3. **If confident**, jumps immediately. If not, falls back to a filesystem search rooted at your current directory, git repository root, and home directory (up to 5 levels deep).
-4. **If still ambiguous**, presents up to 9 options for you to pick from.
-
-You can also pass an explicit path and `o` will jump directly:
-```bash
-o ./some/explicit/path
 ```
 
 ## Installation
@@ -62,6 +46,27 @@ Then move the binary somewhere on your `$PATH`:
 ```bash
 cp target/release/odds ~/.local/bin/      # user only
 cp target/release/odds /usr/local/bin/    # system-wide
+```
+
+### Quickest: download precompiled binary
+
+No Rust toolchain required. Grab the latest binary for your platform from the [releases page](https://github.com/JulianRueck/odds/releases/latest):
+
+```bash
+# Linux x86_64
+curl -L https://github.com/JulianRueck/odds/releases/latest/download/odds-linux-x86_64 -o odds
+chmod +x odds
+mv odds ~/.local/bin/
+
+# macOS Apple Silicon
+curl -L https://github.com/JulianRueck/odds/releases/latest/download/odds-macos-arm64 -o odds
+chmod +x odds
+mv odds ~/.local/bin/
+
+# macOS Intel
+curl -L https://github.com/JulianRueck/odds/releases/latest/download/odds-macos-x86_64 -o odds
+chmod +x odds
+mv odds ~/.local/bin/
 ```
 
 ### Shell integration
