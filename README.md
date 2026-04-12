@@ -58,6 +58,11 @@ curl -L https://github.com/JulianRueck/odds/releases/download/v0.1.2-alpha/odds-
 chmod +x odds
 mv odds ~/.local/bin/
 
+# Linux arm64
+curl -L https://github.com/JulianRueck/odds/releases/download/v0.1.2-alpha/odds-linux-arm64 -o odds
+chmod +x odds
+mv odds ~/.local/bin/
+
 # macOS Apple Silicon
 curl -L https://github.com/JulianRueck/odds/releases/download/v0.1.2-alpha/odds-macos-arm64 -o odds
 chmod +x odds
