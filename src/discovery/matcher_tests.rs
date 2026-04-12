@@ -11,7 +11,7 @@ fn path(s: &str) -> PathBuf {
 fn single_token_exact() {
     let result = match_candidate_multi(&path("/home/user/config"), &["config"]);
     assert!(result.is_some());
-    assert_eq!(result.unwrap().score, 100.0);
+    assert_eq!(result.unwrap().score, 10.0);
 }
 
 #[test]
@@ -72,13 +72,13 @@ fn more_tokens_than_segments_clips_surplus() {
 
 #[test]
 fn hungarian_finds_optimal_over_greedy() {
-    // "con" prefix-matches "config" (70 * 3/6 = 35.0)
-    // "pro" prefix-matches "project" (70 * 3/7 ≈ 30.0)
-    // optimal avg: (35 + 30) / 2 = 32.5
-    // greedy worst case: one token stranded, other scores at best 35 → avg 17.5
+    // "con" prefix-matches "config" (7 * 3/6 = 3.5)
+    // "pro" prefix-matches "project" (7 * 3/7 ≈ 3.0)
+    // optimal avg: (3.5 + 3) / 2 = 3.25
+    // greedy worst case: one token stranded, other scores at best 3.5 → avg 1.75
     let result = match_candidate_multi(&path("/project/config"), &["con", "pro"]);
     let score = result.unwrap().score;
-    assert!(score > 17.5);
+    assert!(score > 1.75);
 }
 
 // --- score ordering ---

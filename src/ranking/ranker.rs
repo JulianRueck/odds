@@ -4,14 +4,12 @@ use std::{
 };
 
 use crate::{
-    discovery::DiscoveryCandidate,
-    persistence::{History, Session},
-    ranking::RankedCandidate,
+    discovery::DiscoveryCandidate, persistence::{History, Session}, ranking::RankedCandidate
 };
 
 pub const FRECENCY_WEIGHT: f32 = 10.0;
-pub const MARKOV_WEIGHT: f32 = 40.0;
-pub const SESSION_WEIGHT: f32 = 12.0;
+pub const MARKOV_WEIGHT: f32 = 15.0;
+pub const SESSION_WEIGHT: f32 = 5.0;
 
 pub const HALF_LIFE_DAYS: f32 = 3.0;
 // λ = ln(2) / T1/2
@@ -71,12 +69,14 @@ fn score_candidate(
         score += SESSION_WEIGHT;
     }
 
-    score
+    // Mixing ranking score with match score and passing it into sigmoid; making the returned score always between 0 and 1.
+    sigmoid(score * candidate.score)
 }
 
 // Having the ability to inject time makes the decay testable.
 fn calculate_frecency_score_at(path: &PathBuf, history: &History, now: u64) -> f32 {
-    let frequency = history.visit_count(path) as f32;
+    // The logarithm flattens out potential dominance caused by a high visit count.
+    let frequency = (history.visit_count(path) as f32 + 1.0).ln();
 
     if let Some(seconds_ago) = history.seconds_since_last_visit_at(path, now) {
         let decay_factor = (-LAMBDA * seconds_ago as f32).exp();
@@ -92,6 +92,10 @@ fn calculate_frecency_score(path: &PathBuf, history: &History) -> f32 {
         .unwrap()
         .as_secs();
     calculate_frecency_score_at(path, history, now)
+}
+
+fn sigmoid(x: f32) -> f32 {
+    1.0 / (1.0 + (-x / 100.0).exp())
 }
 
 #[cfg(test)]

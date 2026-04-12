@@ -12,8 +12,8 @@ pub struct ConfidenceRules {
 impl Default for ConfidenceRules {
     fn default() -> Self {
         Self {
-            min_ranked_score: 70.0,
-            min_score: 35.0,
+            min_ranked_score: 0.8,
+            min_score: 3.5,
         }
     }
 }

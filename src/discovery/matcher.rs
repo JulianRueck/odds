@@ -4,10 +4,10 @@ use pathfinding::{matrix::Matrix, prelude::kuhn_munkres};
 
 use crate::discovery::DiscoveryCandidate;
 
-pub const EXACT_SCORE: f32 = 100.0;
-pub const PREFIX_SCORE: f32 = 70.0;
-pub const SUBSTRING_SCORE: f32 = 50.0;
-pub const FUZZY_SCORE_CAP: f32 = 30.0;
+pub const EXACT_SCORE: f32 = 10.0;
+pub const PREFIX_SCORE: f32 = 7.0;
+pub const SUBSTRING_SCORE: f32 = 5.0;
+pub const FUZZY_SCORE_CAP: f32 = 3.0;
 
 /// Matches a path against multiple tokens using the Hungarian algorithm to find
 /// the optimal assignment of tokens to path segments.
@@ -24,9 +24,9 @@ pub const FUZZY_SCORE_CAP: f32 = 30.0;
 /// # Example
 ///
 /// Given the path `/home/user/projects/api` and tokens `["proj", "api"]`:
-/// - `"proj"` matches `"projects"` as a prefix (70.0)
-/// - `"api"` matches `"api"` as exact (100.0)
-/// - average score: 85.0
+/// - `"proj"` matches `"projects"` as a prefix (7.0)
+/// - `"api"` matches `"api"` as exact (10.0)
+/// - average score: 8.5
 pub fn match_candidate_multi(path: &PathBuf, tokens: &[&str]) -> Option<DiscoveryCandidate> {
     if tokens.is_empty() {
         return None;
@@ -51,13 +51,13 @@ pub fn match_candidate_multi(path: &PathBuf, tokens: &[&str]) -> Option<Discover
 
     let matrix = Matrix::from_fn(rows, cols, |(t, s)| {
         match_candidate(&segments[s], &tokens_l[t])
-            .map(|score| (score * 100.0) as i64)
+            .map(|score| (score * 10.0) as i64)
             .unwrap_or(0)
     });
 
     let (total, _) = kuhn_munkres(&matrix);
 
-    let avg = total as f32 / (tokens_l.len() as f32 * 100.0);
+    let avg = total as f32 / (tokens_l.len() as f32 * 10.0);
 
     if avg == 0.0 {
         return None;
@@ -110,11 +110,11 @@ fn fuzzy_match(name: &str, token: &str) -> Option<f32> {
 
     for (i, c) in name.chars().enumerate() {
         if c == current {
-            score += 10.0;
+            score += 1.0;
 
             if let Some(prev) = last_match {
                 if i == prev + 1 {
-                    score += 15.0;
+                    score += 1.5;
                 } else {
                     score -= (i - prev - 1) as f32;
                 }
@@ -128,7 +128,7 @@ fn fuzzy_match(name: &str, token: &str) -> Option<f32> {
                 current = next;
             } else {
                 // Ensure there's always some positive score using max().
-                return Some(score.max(1.0));
+                return Some(score.max(0.1));
             }
         }
     }
