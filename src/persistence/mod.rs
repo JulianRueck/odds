@@ -1,4 +1,5 @@
 pub mod history;
+pub mod markov;
 pub mod persistable;
 pub mod session;
 

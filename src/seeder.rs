@@ -155,7 +155,13 @@ fn merge_history(history: &mut History, paths: &[PathBuf], now: u64) {
 }
 
 fn merge_session(history: &mut History, paths: &[PathBuf]) {
+    // bigrams
     for window in paths.windows(2) {
-        history.register_markov_chain(&window[0], &window[1]);
+        history.chain.register(None, &window[0], &window[1]);
+    }
+
+    // trigrams
+    for window in paths.windows(3) {
+        history.chain.register(Some(&window[0]), &window[1], &window[2]);
     }
 }

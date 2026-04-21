@@ -36,8 +36,12 @@ fn main() {
             let mut history = History::load_or_new();
             let mut session = Session::load_or_new();
 
-            if let Some(current) = session.current() {
-                history.register_markov_chain(current, &path);
+            if let Some(from) = session.current() {
+                history.chain.register(
+                    session.entries.get(1).map(|e| &e.path), // prev2 for trigram
+                    from,
+                    &path
+                );
             }
 
             history.record_visit(&path);

@@ -1,6 +1,4 @@
-use std::collections::HashMap;
-
-use crate::persistence::history::HistoryEntry;
+use crate::persistence::{history::HistoryEntry, markov::Markov};
 
 use super::*;
 
@@ -14,7 +12,7 @@ fn decay_math_exact() {
             visits: 1,
             last_visited: now - 3600, // exactly 1 hour ago
         }],
-        chain: HashMap::new()
+        chain: Markov::default(),
     };
 
     let score = calculate_frecency_score_at(&path, &history, now);
@@ -34,7 +32,7 @@ fn higher_visit_count_scores_higher() {
             visits: 1,
             last_visited: now,
         }],
-        chain: HashMap::new(),
+        chain: Markov::default(),
     };
     let high_visits = History {
         entries: vec![HistoryEntry {
@@ -42,7 +40,7 @@ fn higher_visit_count_scores_higher() {
             visits: 10,
             last_visited: now,
         }],
-        chain: HashMap::new(),
+        chain: Markov::default(),
     };
 
     assert!(
@@ -62,7 +60,7 @@ fn older_visit_scores_lower() {
             visits: 1,
             last_visited: now - 60,
         }],
-        chain: HashMap::new(),
+        chain: Markov::default(),
     };
     let old = History {
         entries: vec![HistoryEntry {
@@ -70,7 +68,7 @@ fn older_visit_scores_lower() {
             visits: 1,
             last_visited: now - 86400,
         }],
-        chain: HashMap::new(),
+        chain: Markov::default(),
     };
 
     assert!(
