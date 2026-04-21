@@ -5,7 +5,7 @@ use std::{
 };
 
 use crate::persistence::{
-    History, Session,
+    History,
     history::HistoryEntry,
     persistable::Persistable,
 };
@@ -28,13 +28,11 @@ pub fn seed() -> anyhow::Result<()> {
         .as_secs();
 
     let mut history = History::load_or_new();
-    let mut session = Session::load_or_new();
 
     merge_history(&mut history, &paths, now);
-    merge_session(&mut history, &paths);
+    merge_markov(&mut history, &paths);
 
     history.save()?;
-    session.save()?;
 
     eprintln!(
         "Seeded {} directories and {} transitions.",
@@ -154,7 +152,7 @@ fn merge_history(history: &mut History, paths: &[PathBuf], now: u64) {
     }
 }
 
-fn merge_session(history: &mut History, paths: &[PathBuf]) {
+fn merge_markov(history: &mut History, paths: &[PathBuf]) {
     // bigrams
     for window in paths.windows(2) {
         history.chain.register(None, &window[0], &window[1]);
