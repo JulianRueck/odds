@@ -1,8 +1,9 @@
-use std::sync::Mutex;
-use std::path::PathBuf;
-use tempfile::TempDir;
+use odds::persistence::markov::MARKOV_N;
 use odds::persistence::{History, Session, persistable::Persistable};
 use odds::ranking::ranker;
+use std::path::PathBuf;
+use std::sync::Mutex;
+use tempfile::TempDir;
 
 static TEST_MUTEX: Mutex<()> = Mutex::new(());
 
@@ -13,7 +14,9 @@ struct TestEnv {
 impl TestEnv {
     fn new() -> Self {
         let dir = TempDir::new().unwrap();
-        unsafe { std::env::set_var("HOME", dir.path()); }
+        unsafe {
+            std::env::set_var("HOME", dir.path());
+        }
         Self { _dir: dir }
     }
 
@@ -22,12 +25,14 @@ impl TestEnv {
         let mut session = Session::load_or_new();
 
         if let Some(current) = session.current() {
-            let prev = session.previous().cloned();
-            history.chain.register(
-                prev.as_ref(),
-                current,
-                to,
-            );
+            let context: Vec<&PathBuf> = session
+                .entries
+                .iter()
+                .skip(1)
+                .take(MARKOV_N - 1)
+                .map(|e| &e.path)
+                .collect();
+            history.chain.register(&context, current, to);
         }
 
         history.record_visit(to);
@@ -47,6 +52,10 @@ impl TestEnv {
 
 fn simulate_journey(env: &TestEnv, journey: &[&str], times: usize) {
     for _ in 0..times {
+        let mut session = Session::load_or_new();
+        session.entries.clear();
+        session.save().unwrap();
+
         for path in journey {
             env.register(&PathBuf::from(path));
         }
@@ -70,31 +79,28 @@ fn markov_predicts_next_directory() {
     let _lock = TEST_MUTEX.lock().unwrap();
     let env = TestEnv::new();
 
-    simulate_journey(&env, &[
-        "/home/user/Projects",
-        "/home/user/Projects/odds",
-        "/home/user/Projects/odds/src",
-    ], 40);
+    simulate_journey(
+        &env,
+        &[
+            "/home/user/Projects",
+            "/home/user/Projects/odds",
+            "/home/user/Projects/odds/src",
+        ],
+        40,
+    );
 
-    simulate_journey(&env, &[
-        "/home/user/Projects",
-        "/home/user/Projects/other",
-    ], 5);
+    simulate_journey(&env, &["/home/user/Projects", "/home/user/Projects/other"], 5);
 
     env.register(&PathBuf::from("/home/user/Projects"));
 
     let history = History::load_or_new();
 
-    let prob_odds = history.chain.calculate_probability_from(
-        None,
-        "/home/user/Projects",
-        "/home/user/Projects/odds",
-    );
-    let prob_other = history.chain.calculate_probability_from(
-        None,
-        "/home/user/Projects",
-        "/home/user/Projects/other",
-    );
+    let prob_odds = history
+        .chain
+        .calculate_probability_from(&[], "/home/user/Projects", "/home/user/Projects/odds");
+    let prob_other = history
+        .chain
+        .calculate_probability_from(&[], "/home/user/Projects", "/home/user/Projects/other");
 
     assert!(prob_odds > prob_other);
 }
@@ -105,37 +111,37 @@ fn trigram_improves_prediction_over_bigram() {
     let env = TestEnv::new();
 
     // From home -> Projects, user always goes to odds
-    simulate_journey(&env, &[
-        "/home/user",
-        "/home/user/Projects",
-        "/home/user/Projects/odds",
-    ], 30);
+    simulate_journey(
+        &env,
+        &["/home/user", "/home/user/Projects", "/home/user/Projects/odds"],
+        30,
+    );
 
     // From config -> Projects, user always goes to other
-    simulate_journey(&env, &[
-        "/home/user/.config",
-        "/home/user/Projects",
-        "/home/user/Projects/other",
-    ], 30);
+    simulate_journey(
+        &env,
+        &["/home/user/.config", "/home/user/Projects", "/home/user/Projects/other"],
+        30,
+    );
 
     let history = History::load_or_new();
 
     // Bigram alone is ambiguous — Projects leads to both equally
-    let bigram_odds = history.chain.calculate_probability_from(
-        None,
-        "/home/user/Projects",
-        "/home/user/Projects/odds",
-    );
+    let bigram_odds = history
+        .chain
+        .calculate_probability_from(&[], "/home/user/Projects", "/home/user/Projects/odds");
     assert_eq!(bigram_odds, 0.5, "bigram should be exactly ambiguous");
 
     // Trigram resolves the ambiguity — coming from home strongly predicts odds
-    let trigram_odds_from_home = history.chain.calculate_probability_from(
-        Some("/home/user"),
-        "/home/user/Projects",
-        "/home/user/Projects/odds",
+    let trigram_odds_from_home =
+        history
+            .chain
+            .calculate_probability_from(&["/home/user"], "/home/user/Projects", "/home/user/Projects/odds");
+    assert!(
+        trigram_odds_from_home > 0.8,
+        "trigram from home should strongly predict odds: {}",
+        trigram_odds_from_home
     );
-    assert!(trigram_odds_from_home > 0.8,
-        "trigram from home should strongly predict odds: {}", trigram_odds_from_home);
 }
 
 #[test]
@@ -169,7 +175,12 @@ fn recency_beats_frequency_for_stale_directories() {
     let old_score = old_ranked.first().map(|c| c.ranked_score).unwrap_or(0.0);
     let new_score = new_ranked.first().map(|c| c.ranked_score).unwrap_or(0.0);
 
-    assert!(new_score > old_score, "recent should beat stale: new={} old={}", new_score, old_score);
+    assert!(
+        new_score > old_score,
+        "recent should beat stale: new={} old={}",
+        new_score,
+        old_score
+    );
 }
 
 #[test]
@@ -177,11 +188,15 @@ fn multi_token_finds_correct_directory() {
     let _lock = TEST_MUTEX.lock().unwrap();
     let env = TestEnv::new();
 
-    simulate_journey(&env, &[
-        "/home/user/Projects/odds",
-        "/home/user/Projects/odds/src",
-        "/home/user/Projects/other/src",
-    ], 20);
+    simulate_journey(
+        &env,
+        &[
+            "/home/user/Projects/odds",
+            "/home/user/Projects/odds/src",
+            "/home/user/Projects/other/src",
+        ],
+        20,
+    );
 
     let result = env.top_candidate(&["odds", "src"]);
     assert_eq!(result, Some(PathBuf::from("/home/user/Projects/odds/src")));

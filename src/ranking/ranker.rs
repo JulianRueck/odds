@@ -4,7 +4,9 @@ use std::{
 };
 
 use crate::{
-    discovery::DiscoveryCandidate, persistence::{History, Session}, ranking::RankedCandidate
+    discovery::DiscoveryCandidate,
+    persistence::{History, Session, markov::MARKOV_N},
+    ranking::RankedCandidate,
 };
 
 pub const FRECENCY_WEIGHT: f32 = 10.0;
@@ -58,8 +60,15 @@ fn score_candidate(
             let to_str = candidate.path.to_str().expect("Invalid UTF-8 in path.");
             let from_str = from.to_str().expect("Invalid UTF-8 in current path.");
 
-            let prev = session.previous().map(|p| p.to_str()).flatten();
-            let prob = history.chain.calculate_probability_from(prev, from_str, to_str);
+            let context: Vec<&str> = session
+                .entries
+                .iter()
+                .skip(1)
+                .take(MARKOV_N - 1)
+                .filter_map(|e| e.path.to_str())
+                .collect();
+
+            let prob = history.chain.calculate_probability_from(&context, from_str, to_str);
 
             score += prob * MARKOV_WEIGHT;
         }
@@ -88,10 +97,7 @@ fn calculate_frecency_score_at(path: &PathBuf, history: &History, now: u64) -> f
 }
 
 fn calculate_frecency_score(path: &PathBuf, history: &History) -> f32 {
-    let now = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap()
-        .as_secs();
+    let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
     calculate_frecency_score_at(path, history, now)
 }
 
