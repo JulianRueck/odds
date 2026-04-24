@@ -3,7 +3,7 @@ use std::{collections::HashMap, path::PathBuf};
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 
-pub const MARKOV_N: usize = 5;
+pub const MARKOV_N: usize = 4;
 
 #[serde_as]
 #[derive(Debug, Serialize, Deserialize, Default)]

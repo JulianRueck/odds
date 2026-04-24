@@ -9,7 +9,7 @@ mod cache;
 
 pub mod matcher;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct DiscoveryCandidate {
     pub path: PathBuf,
     pub score: f32,
