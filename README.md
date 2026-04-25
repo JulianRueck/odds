@@ -54,22 +54,22 @@ No Rust toolchain required. Grab the latest binary for your platform from the [r
 
 ```bash
 # Linux x86_64
-curl -L https://github.com/JulianRueck/odds/releases/download/v0.1.2-alpha/odds-linux-x86_64 -o odds
+curl -L https://github.com/JulianRueck/odds/releases/download/v0.1.3-alpha/odds-linux-x86_64 -o odds
 chmod +x odds
 mv odds ~/.local/bin/
 
 # Linux arm64
-curl -L https://github.com/JulianRueck/odds/releases/download/v0.1.2-alpha/odds-linux-arm64 -o odds
+curl -L https://github.com/JulianRueck/odds/releases/download/v0.1.3-alpha/odds-linux-arm64 -o odds
 chmod +x odds
 mv odds ~/.local/bin/
 
 # macOS Apple Silicon
-curl -L https://github.com/JulianRueck/odds/releases/download/v0.1.2-alpha/odds-macos-arm64 -o odds
+curl -L https://github.com/JulianRueck/odds/releases/download/v0.1.3-alpha/odds-macos-arm64 -o odds
 chmod +x odds
 mv odds ~/.local/bin/
 
 # macOS Intel
-curl -L https://github.com/JulianRueck/odds/releases/download/v0.1.2-alpha/odds-macos-x86_64 -o odds
+curl -L https://github.com/JulianRueck/odds/releases/download/v0.1.3-alpha/odds-macos-x86_64 -o odds
 chmod +x odds
 mv odds ~/.local/bin/
 ```
