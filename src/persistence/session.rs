@@ -14,7 +14,7 @@ pub struct SessionEntry {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Session {
     max_size: usize,
-    entries: Vec<SessionEntry>,
+    pub entries: Vec<SessionEntry>,
     saved_at: u64,
 }
 

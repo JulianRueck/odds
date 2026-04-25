@@ -4,7 +4,7 @@ use crate::discovery::DiscoveryCandidate;
 
 pub mod ranker;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct RankedCandidate {
     pub candidate: DiscoveryCandidate,
     pub ranked_score: f32,

@@ -4,11 +4,7 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
-use crate::persistence::{
-    History, Session,
-    history::HistoryEntry,
-    persistable::Persistable,
-};
+use crate::persistence::{History, history::HistoryEntry, markov::MARKOV_N, persistable::Persistable};
 
 pub fn seed() -> anyhow::Result<()> {
     let hist_file = detect_hist_file()?;
@@ -23,18 +19,14 @@ pub fn seed() -> anyhow::Result<()> {
         return Ok(());
     }
 
-    let now = SystemTime::now()
-        .duration_since(UNIX_EPOCH)?
-        .as_secs();
+    let now = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
 
     let mut history = History::load_or_new();
-    let mut session = Session::load_or_new();
 
     merge_history(&mut history, &paths, now);
-    merge_session(&mut history, &paths);
+    merge_markov(&mut history, &paths);
 
     history.save()?;
-    session.save()?;
 
     eprintln!(
         "Seeded {} directories and {} transitions.",
@@ -56,10 +48,7 @@ fn detect_hist_file() -> anyhow::Result<PathBuf> {
 
     // Fall back to common locations.
     let home = env::var("HOME")?;
-    let candidates = [
-        format!("{home}/.zsh_history"),
-        format!("{home}/.bash_history"),
-    ];
+    let candidates = [format!("{home}/.zsh_history"), format!("{home}/.bash_history")];
 
     for path in &candidates {
         let p = PathBuf::from(path);
@@ -154,8 +143,13 @@ fn merge_history(history: &mut History, paths: &[PathBuf], now: u64) {
     }
 }
 
-fn merge_session(history: &mut History, paths: &[PathBuf]) {
-    for window in paths.windows(2) {
-        history.register_markov_chain(&window[0], &window[1]);
+fn merge_markov(history: &mut History, paths: &[PathBuf]) {
+    for n in 1..=MARKOV_N {
+        for window in paths.windows(n + 1) {
+            let context: Vec<&PathBuf> = window[..n - 1].iter().collect();
+            let from = &window[n - 1];
+            let to = &window[n];
+            history.chain.register(&context, from, to);
+        }
     }
 }

@@ -1,11 +1,11 @@
 use serde::{Deserialize, Serialize};
 use std::{
-    collections::HashMap, path::PathBuf, time::{SystemTime, UNIX_EPOCH}
+    path::PathBuf, time::{SystemTime, UNIX_EPOCH}
 };
 
 use crate::{
     discovery::{DiscoveryCandidate, matcher::match_candidate_multi},
-    persistence::persistable::Persistable,
+    persistence::{markov::Markov, persistable::Persistable},
 };
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -18,7 +18,7 @@ pub struct HistoryEntry {
 #[derive(Debug, Serialize, Deserialize, Default)]
 pub struct History {
     pub entries: Vec<HistoryEntry>,
-    pub chain: HashMap<String, HashMap<String, usize>>,
+    pub chain: Markov,
 }
 
 impl History {
@@ -88,38 +88,8 @@ impl History {
         self.seconds_since_last_visit_at(path, now)
     }
 
-    /// Calculate the probability of visiting the target from the source.
-    pub fn calculate_probability_from(&self, to: &str, from: &str) -> f32 {
-        if let Some(dest_map) = self.chain.get(from) {
-            let count = *dest_map.get(to).unwrap_or(&0) as f32;
-            let total: usize = dest_map.values().sum();
-
-            if total > 0 {
-                return count / total as f32;
-            }
-        }
-        0.0
-    }
-
-    /// Register the amount of transitions from one path to another.
-    pub fn register_markov_chain(&mut self, from: &PathBuf, to: &PathBuf) {
-        if !from.is_absolute() || !to.is_absolute() {
-            return;
-        }
-        
-        let from_str = from.to_str().expect("Invalid UTF-8 in current path.");
-        let to_str = to.to_str().expect("Invalid UTF-8 in path.");
-
-        if from_str != to_str {
-            let dest_map = self.chain.entry(from_str.to_string()).or_default();
-            let count = dest_map.entry(to_str.to_string()).or_insert(0);
-
-            *count += 1;
-        }
-    }
-
     pub fn transition_count(&self) -> usize {
-        self.chain.values().map(|dest_map| dest_map.len()).sum()
+        self.chain.transition_count()
     }
 }
 

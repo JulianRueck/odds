@@ -10,7 +10,7 @@ use odds::{
         picker::{self, ConfidenceRules},
     },
     paths,
-    persistence::{History, Session, persistable::Persistable},
+    persistence::{History, Session, markov::MARKOV_N, persistable::Persistable},
     ranking::ranker,
     seeder,
 };
@@ -36,8 +36,16 @@ fn main() {
             let mut history = History::load_or_new();
             let mut session = Session::load_or_new();
 
-            if let Some(current) = session.current() {
-                history.register_markov_chain(current, &path);
+            if let Some(from) = session.current() {
+                let context: Vec<&PathBuf> = session
+                    .entries
+                    .iter()
+                    .skip(1)
+                    .take(MARKOV_N - 1)
+                    .map(|e| &e.path)
+                    .collect();
+
+                history.chain.register(&context, from, &path);
             }
 
             history.record_visit(&path);
@@ -48,13 +56,13 @@ fn main() {
             }
 
             if let Err(e) = session.save() {
-               eprintln!("Error saving session while registering regular cd: {e}")
+                eprintln!("Error saving session while registering regular cd: {e}")
             }
 
             return;
         }
 
-        Some(Commands::Query { tokens }) => {  
+        Some(Commands::Query { tokens }) => {
             odds(tokens);
         }
 
@@ -81,7 +89,8 @@ fn odds(raw_tokens: &[String]) {
     if raw_tokens.len() == 1 && raw_tokens[0] == "-" {
         if let Some(previous) = session.previous().cloned() {
             let home = paths::home_dir();
-            let display = previous.strip_prefix(&home)
+            let display = previous
+                .strip_prefix(&home)
                 .map(|p| format!("~/{}", p.display()))
                 .unwrap_or_else(|_| previous.display().to_string());
             eprintln!("{}", display);
