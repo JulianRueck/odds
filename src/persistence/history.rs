@@ -45,6 +45,7 @@ impl History {
     pub fn history_candidates(&self, tokens: &[&str]) -> Vec<DiscoveryCandidate> {
         self.entries
             .iter()
+            .filter(|entry| entry.path.is_dir())
             .filter_map(|entry| {
                 match_candidate_multi(&entry.path, tokens)
             })
