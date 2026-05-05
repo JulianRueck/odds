@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::{
-    path::PathBuf, time::{SystemTime, UNIX_EPOCH}
+    path::PathBuf,
+    time::{SystemTime, UNIX_EPOCH},
 };
 
 use crate::{
@@ -24,10 +25,7 @@ pub struct History {
 impl History {
     /// Record a visit in memory.
     pub fn record_visit(&mut self, path: &PathBuf) {
-        let now = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_secs();
+        let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
 
         if let Some(entry) = self.entries.iter_mut().find(|e| e.path == *path) {
             entry.visits += 1;
@@ -46,24 +44,24 @@ impl History {
         self.entries
             .iter()
             .filter(|entry| entry.path.is_dir())
-            .filter_map(|entry| {
-                match_candidate_multi(&entry.path, tokens)
-            })
+            .filter_map(|entry| match_candidate_multi(&entry.path, tokens))
             .collect()
     }
 
     pub fn load_or_new() -> Self {
-        if let Ok(history) = Self::load() {
-            return history;
+        match Self::load() {
+            Ok(history) => history,
+            Err(e) => {
+                if Self::path().exists() {
+                    eprintln!("Warning: could not load {}: {e}", Self::FILE);
+                }
+                let mut new_history = Self::default();
+                if let Err(e) = new_history.save() {
+                    eprintln!("Error saving {}: {e}", Self::FILE);
+                }
+                new_history
+            }
         }
-
-        let mut new_history = Self::default();
-
-        if let Err(e) = new_history.save() {
-            eprintln!("Error saving history: {e}")
-        }
-
-        new_history
     }
 
     pub fn visit_count(&self, path: &PathBuf) -> usize {
@@ -82,10 +80,7 @@ impl History {
     }
 
     pub fn seconds_since_last_visit(&self, path: &PathBuf) -> Option<u64> {
-        let now = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_secs();
+        let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
         self.seconds_since_last_visit_at(path, now)
     }
 

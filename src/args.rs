@@ -54,6 +54,8 @@ pub enum Commands {
         #[arg(allow_hyphen_values = true, trailing_var_arg = true)]
         tokens: Vec<String>,
     },
+
+    Reset,
 }
 
 impl Cli {

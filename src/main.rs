@@ -66,6 +66,11 @@ fn main() {
             odds(tokens);
         }
 
+        Some(Commands::Reset) => {
+            History::reset();
+            Session::reset();
+        }
+
         None => {
             eprintln!("Usage: odds [COMMAND]");
         }
