@@ -20,6 +20,13 @@ impl TestEnv {
         Self { _dir: dir }
     }
 
+    fn real_path(&self, fake: &str) -> PathBuf {
+        let relative = fake.trim_start_matches('/');
+        let path = self._dir.path().join(relative);
+        std::fs::create_dir_all(&path).unwrap();
+        path.canonicalize().unwrap()
+    }
+
     fn register(&self, to: &PathBuf) {
         let mut history = History::load_or_new();
         let mut session = Session::load_or_new();
@@ -57,7 +64,7 @@ fn simulate_journey(env: &TestEnv, journey: &[&str], times: usize) {
         session.save().unwrap();
 
         for path in journey {
-            env.register(&PathBuf::from(path));
+            env.register(&env.real_path(path));
         }
     }
 }
@@ -71,7 +78,7 @@ fn frequent_project_surfaces_first() {
     simulate_journey(&env, &["/home/user/Backup/odds"], 5);
 
     let result = env.top_candidate(&["odds"]);
-    assert_eq!(result, Some(PathBuf::from("/home/user/Projects/odds")));
+    assert_eq!(result, Some(env.real_path("/home/user/Projects/odds")));
 }
 
 #[test]
@@ -89,18 +96,24 @@ fn markov_predicts_next_directory() {
         40,
     );
 
-    simulate_journey(&env, &["/home/user/Projects", "/home/user/Projects/other"], 5);
-
-    env.register(&PathBuf::from("/home/user/Projects"));
+    simulate_journey(
+        &env,
+        &["/home/user/Projects", "/home/user/Projects/other"],
+        5,
+    );
 
     let history = History::load_or_new();
 
-    let prob_odds = history
-        .chain
-        .calculate_probability_from(&[], "/home/user/Projects", "/home/user/Projects/odds");
-    let prob_other = history
-        .chain
-        .calculate_probability_from(&[], "/home/user/Projects", "/home/user/Projects/other");
+    let prob_odds = history.chain.calculate_probability_from(
+        &[],
+        env.real_path("/home/user/Projects").to_str().unwrap(),
+        env.real_path("/home/user/Projects/odds").to_str().unwrap(),
+    );
+    let prob_other = history.chain.calculate_probability_from(
+        &[],
+        env.real_path("/home/user/Projects").to_str().unwrap(),
+        env.real_path("/home/user/Projects/other").to_str().unwrap(),
+    );
 
     assert!(prob_odds > prob_other);
 }
@@ -110,33 +123,49 @@ fn trigram_improves_prediction_over_bigram() {
     let _lock = TEST_MUTEX.lock().unwrap();
     let env = TestEnv::new();
 
-    // From home -> Projects, user always goes to odds
     simulate_journey(
         &env,
-        &["/home/user", "/home/user/Projects", "/home/user/Projects/odds"],
+        &[
+            "/home/user",
+            "/home/user/Projects",
+            "/home/user/Projects/odds",
+        ],
         30,
     );
 
-    // From config -> Projects, user always goes to other
     simulate_journey(
         &env,
-        &["/home/user/.config", "/home/user/Projects", "/home/user/Projects/other"],
+        &[
+            "/home/user/.config",
+            "/home/user/Projects",
+            "/home/user/Projects/other",
+        ],
         30,
     );
 
     let history = History::load_or_new();
 
-    // Bigram alone is ambiguous — Projects leads to both equally
+    let projects = env
+        .real_path("/home/user/Projects")
+        .to_str()
+        .unwrap()
+        .to_string();
+    let home = env.real_path("/home/user").to_str().unwrap().to_string();
+    let odds = env
+        .real_path("/home/user/Projects/odds")
+        .to_str()
+        .unwrap()
+        .to_string();
+
     let bigram_odds = history
         .chain
-        .calculate_probability_from(&[], "/home/user/Projects", "/home/user/Projects/odds");
+        .calculate_probability_from(&[], &projects, &odds);
     assert_eq!(bigram_odds, 0.5, "bigram should be exactly ambiguous");
 
-    // Trigram resolves the ambiguity — coming from home strongly predicts odds
     let trigram_odds_from_home =
         history
             .chain
-            .calculate_probability_from(&["/home/user"], "/home/user/Projects", "/home/user/Projects/odds");
+            .calculate_probability_from(&[&home], &projects, &odds);
     assert!(
         trigram_odds_from_home > 0.8,
         "trigram from home should strongly predict odds: {}",
@@ -152,10 +181,11 @@ fn recency_beats_frequency_for_stale_directories() {
     simulate_journey(&env, &["/home/user/Projects/old"], 100);
 
     {
+        let old_path = env.real_path("/home/user/Projects/old");
         let mut history = History::load_or_new();
         for entry in history.entries.iter_mut() {
-            if entry.path == PathBuf::from("/home/user/Projects/old") {
-                entry.last_visited = 0; // Jan 1st 1970
+            if entry.path == old_path {
+                entry.last_visited = 0;
             }
         }
         history.save().unwrap();
@@ -199,5 +229,5 @@ fn multi_token_finds_correct_directory() {
     );
 
     let result = env.top_candidate(&["odds", "src"]);
-    assert_eq!(result, Some(PathBuf::from("/home/user/Projects/odds/src")));
+    assert_eq!(result, Some(env.real_path("/home/user/Projects/odds/src")));
 }
