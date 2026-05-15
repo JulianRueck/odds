@@ -9,7 +9,7 @@ pub const MARKOV_N: usize = 4;
 #[derive(Debug, Serialize, Deserialize, Default)]
 pub struct Markov {
     #[serde_as(as = "Vec<(_, _)>")]
-    pub chain: HashMap<Vec<String>, HashMap<String, usize>>,
+    pub transitions: HashMap<Vec<String>, HashMap<String, usize>>,
 }
 
 impl Markov {
@@ -17,7 +17,7 @@ impl Markov {
     pub fn calculate_probability_from(&self, context: &[&str], from: &str, to: &str) -> f32 {
         for n in (1..=MARKOV_N).rev() {
             let key = self.build_key_str(context, from, n);
-            if let Some(dest_map) = self.chain.get(&key) {
+            if let Some(dest_map) = self.transitions.get(&key) {
                 let count = *dest_map.get(to).unwrap_or(&0) as f32;
                 let total: usize = dest_map.values().sum();
                 if total > 0 {
@@ -46,7 +46,7 @@ impl Markov {
             }
 
             let key = self.build_key(context, from_str, n);
-            let dest_map = self.chain.entry(key).or_default();
+            let dest_map = self.transitions.entry(key).or_default();
             *dest_map.entry(to_str.to_string()).or_insert(0) += 1;
         }
     }
@@ -70,7 +70,7 @@ impl Markov {
     }
 
     pub fn transition_count(&self) -> usize {
-        self.chain.values().map(|d| d.len()).sum()
+        self.transitions.values().map(|d| d.len()).sum()
     }
 }
 
