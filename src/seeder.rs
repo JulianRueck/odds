@@ -48,7 +48,11 @@ fn detect_hist_file() -> anyhow::Result<PathBuf> {
 
     // Fall back to common locations.
     let home = env::var("HOME")?;
-    let candidates = [format!("{home}/.zsh_history"), format!("{home}/.bash_history")];
+    let candidates = [
+        format!("{home}/.zsh_history"),
+        format!("{home}/.bash_history"),
+        format!("{home}/.local/share/fish/fish_history"),
+    ];
 
     for path in &candidates {
         let p = PathBuf::from(path);
@@ -61,6 +65,14 @@ fn detect_hist_file() -> anyhow::Result<PathBuf> {
 }
 
 fn extract_paths(contents: &str) -> Vec<PathBuf> {
+    if contents.contains("- cmd:") {
+        extract_paths_fish(contents)
+    } else {
+        extract_paths_posix(contents)
+    }
+}
+
+fn extract_paths_posix(contents: &str) -> Vec<PathBuf> {
     let home = env::var("HOME").unwrap_or_default();
     let mut current = PathBuf::from(&home);
     let mut paths = Vec::new();
@@ -103,6 +115,63 @@ fn extract_paths(contents: &str) -> Vec<PathBuf> {
         };
 
         // Canonicalize to resolve `..` and `.` segments.
+        let canonical = match resolved.canonicalize() {
+            Ok(p) => p,
+            Err(_) => {
+                skipped_nonexistent += 1;
+                continue;
+            }
+        };
+
+        if canonical.is_dir() {
+            current = canonical.clone();
+            paths.push(canonical);
+        } else {
+            skipped_nonexistent += 1;
+        }
+    }
+
+    eprintln!(
+        "Found {} cd commands → {} valid paths ({} no longer exist)",
+        total_cd,
+        paths.len(),
+        skipped_nonexistent,
+    );
+
+    paths
+}
+
+fn extract_paths_fish(contents: &str) -> Vec<PathBuf> {
+    let home = env::var("HOME").unwrap_or_default();
+    let mut current = PathBuf::from(&home);
+    let mut paths = Vec::new();
+    let mut total_cd = 0;
+    let mut skipped_nonexistent = 0;
+
+    for line in contents.lines() {
+        let dir = match line.trim().strip_prefix("- cmd: cd ") {
+            Some(d) => d.trim(),
+            None => continue,
+        };
+
+        total_cd += 1;
+
+        if dir.is_empty() || dir == "-" {
+            continue;
+        }
+
+        let expanded = if dir == "~" {
+            PathBuf::from(&home)
+        } else {
+            PathBuf::from(dir.replace('~', &home))
+        };
+
+        let resolved = if expanded.is_absolute() {
+            expanded
+        } else {
+            current.join(&expanded)
+        };
+
         let canonical = match resolved.canonicalize() {
             Ok(p) => p,
             Err(_) => {

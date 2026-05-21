@@ -28,6 +28,21 @@ chpwd() {
 }
 "#;
 
+pub const FISH_SCRIPT: &str = r#"
+function o
+    set result (command odds query --pwd "$PWD" $argv)
+    if test -n "$result"
+        cd $result
+    else if test (count $argv) -eq 1 -a "$argv[1]" = "-"
+        cd -
+    end
+end
+
+function _odds_register --on-variable PWD
+    command odds register --pwd $PWD &>/dev/null &
+end
+"#;
+
 #[derive(Parser)]
 #[command(name = "odds")]
 pub struct Cli {
@@ -65,6 +80,10 @@ impl Cli {
             }
             "zsh" => {
                 print!("{}{}", BASH_ZSH_SCRIPT, ZSH_EXTRA);
+                true
+            }
+            "fish" => {
+                print!("{}", FISH_SCRIPT);
                 true
             }
             _ => {
